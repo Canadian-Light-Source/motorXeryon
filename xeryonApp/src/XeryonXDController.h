@@ -49,15 +49,11 @@ private:
     // TODO: check and add support for XD controller features
 protected:
     int statrb_; /**< axis status word readback */
-    int mclf_; /**< MCL frequency */
-#define FIRST_XD_PARAM mclf_
+#define FIRST_XD_PARAM statrb_
     int eposrb_; /**< axis encoder readback */
     int dposrb_; /**< axis target position readback */
     int sspdrb_; /**< axis velocity setpoiny readback */
-    int ptyp_;   /**< positioner type */
-    int ptyprb_; /**< positioner type readback */
-    int cal_;    /**< calibration command */
-#define LAST_XD_PARAM cal_
+#define LAST_XD_PARAM sspdrb_
 #define NUM_XD_PARAMS (&LAST_XD_PARAM - &FIRST_XD_PARAM + 1)
 
     friend class XDAxis;

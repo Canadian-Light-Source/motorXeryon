@@ -31,6 +31,7 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
   // stop unsolicited data transfer
   sprintf(pC_->outString_, "INFO=0");
   status = pC_->writeController();
+
   callParamCallbacks();
 }
 
@@ -45,59 +46,9 @@ void XDAxis::report(FILE *fp, int level)
 {
   if (level > 0)
   {
-    int pcode;
-    char pname[256];
-    int channelState;
-    int vel;
-    int acc;
-    int mclf;
-    int followError;
-    int error;
-    int temp;
-
     asynStatus status;
 
-    // sprintf(pC_->outString_, ":CHAN%d:PTYP?", channel_);
-    // status = pC_->writeReadController();
-    // pcode = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:PTYP:NAME?", channel_);
-    // status = pC_->writeReadController();
-    // strcpy(pC_->inString_, pname);
-    // sprintf(pC_->outString_, ":CHAN%d:STAT?", channel_);
-    // status = pC_->writeReadController();
-    // channelState = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:VEL?", channel_);
-    // status = pC_->writeReadController();
-    // vel = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:ACC?", channel_);
-    // status = pC_->writeReadController();
-    // acc = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:MCLF?", channel_);
-    // status = pC_->writeReadController();
-    // mclf = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:FERR?", channel_);
-    // status = pC_->writeReadController();
-    // followError = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:ERR?", channel_);
-    // status = pC_->writeReadController();
-    // error = atoi(pC_->inString_);
-    // sprintf(pC_->outString_, ":CHAN%d:TEMP?", channel_);
-    // status = pC_->writeReadController();
-    // temp = atoi(pC_->inString_);
-
-    //   fprintf(fp, "  axis %d\n"
-    // 		    " positioner type %d\n"
-    // 			" positioner name %s\n"
-    // 			" state %d\n"
-    // 			" velocity %d\n"
-    // 			" acceleration %d\n"
-    // 			" max closed loop frequency %d\n"
-    // 			" following error %d\n"
-    // 			" error %d\n"
-    // 			" temp %d\n",
-    //           axisNo_, pcode, pname, channelState, vel,
-    // 		acc, mclf, followError, error, temp);
-    // pC_->clearErrors();
+    //   fprintf(fp, " foo %d ", status);
   }
 
   // Call the base class method
@@ -109,16 +60,32 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   asynStatus status = asynSuccess;
   static const char *functionName = "move";
 
-  std::cout << "===========================================================\n";
-  std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
-  std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
-  std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
-  std::cout << "III: " << functionName << " accele:   " << acceleration << std::endl;
-  std::cout << "===========================================================\n";
+  // std::cout << "===========================================================\n";
+  // std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
+  // std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
+  // std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
+  // std::cout << "III: " << functionName << " accel:    " << acceleration << std::endl;
+  // std::cout << "III: " << functionName << " MRES:     " << pC_->motorResolution_ << std::endl;
+  // std::cout << "III: " << functionName << " MR res:   " << pC_->motorRecResolution_ << std::endl;
+  // std::cout << "III: " << functionName << " Enc ratio:" << pC_->motorEncoderRatio_ << std::endl;
+  // std::cout << "===========================================================\n";
 
   // Set velocity
+  /*
+    TODO: SSPD is in weird units, 1 um/s for linear actuators and 0.01 deg/s for angular
+    need to find a way to obtain MRES in here to scale the velocity properly
+  */
   sprintf(pC_->outString_, "SSPD=%d", (int)maxVelocity);
   status = pC_->writeController();
+
+  // recover from potential stopped move
+  /*
+    TODO: this doesn't work
+    check is STOP-stade can be read and linked to CNEN and ERROR
+  sprintf(pC_->outString_, "CONT=1");
+  status = pC_->writeController();
+  */
+
   // set absolute or relative movement target
   if (relative)
   {
@@ -138,7 +105,11 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
   asynStatus status = asynSuccess;
   static const char *functionName = "homeAxis";
   std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
-  printf("Home command received %d\n", forwards);
+
+  /*
+    TODO: this doesn't work when the controller is power cycled
+    I assume this is due to wrong state of the controller for the MR to issue the command
+  */
 
   // Begin move
   sprintf(pC_->outString_, "INDX=%d", forwards);
@@ -153,7 +124,9 @@ asynStatus XDAxis::stop(double acceleration)
   static const char *functionName = "stopAxis";
 
   // std::cout << "III: " << functionName << " ====> STOP <==== " << std::endl;
-  std::cout << "III: " << functionName << " ====> STOP NO EXECUTION !!! <==== " << std::endl;
+  // std::cout << "III: " << functionName << " ====> STOP NO EXECUTION !!! <==== " << std::endl;
+
+  // TODO: Implement recovery from this state to be able to actually use it.
 
   // sprintf(pC_->outString_, "STOP=1");
   // status = pC_->writeController();
@@ -173,14 +146,18 @@ asynStatus XDAxis::stop(double acceleration)
 
 /** Polls the axis.
  * This function reads the controller position, encoder position, the limit status, the moving status,
- * the drive power-on status and positioner type. It does not current detect following error, etc.
- * but this could be added.
+ * the drive power-on status and positioner type.
  * It calls setIntegerParam() and setDoubleParam() for each item that it polls,
  * and then calls callParamCallbacks() at the end.
  * \param[out] moving A flag that is set indicating that the axis is moving (1) or done (0). */
 asynStatus XDAxis::poll(bool *moving)
 {
 
+  /*
+    TODO:
+      - get rid of the ugly `goto`
+      - out source status to a utility class instance to clean up the code here
+  */
   bool isForceZero;
   bool isMotorOn;
   bool isClosedLoop;
@@ -229,9 +206,11 @@ asynStatus XDAxis::poll(bool *moving)
   *moving = !isPositionReached;
   setIntegerParam(pC_->motorStatusDone_, isPositionReached);
   setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
-  setIntegerParam(pC_->motorStatusHasEncoder_, isEncoderValid);
-  setIntegerParam(pC_->motorStatusGainSupport_, isEncoderValid);
-  setIntegerParam(pC_->motorStatusHomed_, 1);
+  // setIntegerParam(pC_->motorStatusHasEncoder_, isEncoderValid);
+  setIntegerParam(pC_->motorStatusHasEncoder_, 1);
+  // setIntegerParam(pC_->motorStatusGainSupport_, isClosedLoop);
+  setIntegerParam(pC_->motorStatusGainSupport_, 1);
+  setIntegerParam(pC_->motorStatusHomed_, isEncoderValid);
   setIntegerParam(pC_->motorStatusHighLimit_, isAtLeftEnd);
   setIntegerParam(pC_->motorStatusLowLimit_, isAtRightEnd);
   setIntegerParam(pC_->motorStatusFollowingError_, isErrorLimit);

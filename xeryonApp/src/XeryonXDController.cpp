@@ -33,14 +33,10 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating controller\n");
 
     // Create controller-specific parameters
-    // createParam(XDMclfString, asynParamInt32, &this->mclf_);
     createParam(XDstatString, asynParamInt32, &this->statrb_);   // whole positioner status word
     createParam(XDsspdString, asynParamInt32, &this->sspdrb_);   // sspd readback
     createParam(XDeposString, asynParamInt32, &this->eposrb_);   // epos readback
     createParam(XDdposString, asynParamInt32, &this->dposrb_);   // dpos readback
-    // createParam(XDPtypString, asynParamInt32, &this->ptyp_);
-    // createParam(XDPtypRbString, asynParamInt32, &this->ptyprb_);
-    // createParam(XDCalString, asynParamInt32, &this->cal_);
 
     /* Connect to XD controller */
     status = pasynOctetSyncIO->connect(XDPortName, 0, &pasynUserController_, NULL);
@@ -55,7 +51,6 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                   driverName, functionName, status);
     }
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Clearing error messages\n");
-    // this->clearErrors();
 
     sprintf(this->outString_, "SOFT=?");
     status = this->writeReadController();
@@ -66,7 +61,6 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                   driverName, functionName, status);
     }
     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: Software version: %s\n", this->inString_);
-    // this->clearErrors();
 
     // Create the axis objects
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating axes\n");
