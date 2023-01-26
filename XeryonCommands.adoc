@@ -1,0 +1,41 @@
+:toc:
+
+= Xeryon commands relevant to the motorRecord
+Dr. Niko Kivel <niko.kivel@lightsource.ca>
+v0.1, 2023-01-26
+
+== Setup
+The driver will set `INFO=0` to switch off the status streaming of the ontroller.
+
+== Command set
+This is a list of commands used by the driver.
+It's only a subset of the full command set.
+Refer to the controller manual for details.
+
+[NOTE]
+====
+`STOP` seems dagerous, as it requires `CONT` to resume operation.
+As the motorRecord isfamous for blaring stop all the time, this might need some attention.
+====
+
+[cols=5*,options=header]
+|===
+|ASCII command
+|action
+|reply
+|motorRecord
+|field
+
+|INFO  |set verbosity                 |0..6     |n/a         |n/a
+|INDX  |find index                    |0..1     |home()      |HOM{F,R}
+|DPOS  |target position               |26 bits  |move() abs  |VAL
+|STEP  |incremental position          |26 bits  |move() rel  |
+|SCAN  |move velocity                 |-1..1    |move() vel  |JOG{F,R}
+|EPOS  |encoder position              |26 bits  |poll()      |RBV
+|SSPD  |velocity                      |24 bits  |       |VELO
+|ISPD  |referencing velocity          |24 bits  |       |HVEL
+|ACCE  |acceleration                  |16 bits  |       |HVEL
+|STOP  |stop movement                 |1 bit    |stop()       |STOP
+|CONT  |continue movement after stop  |1 bit    |       |
+
+|===
