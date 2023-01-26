@@ -34,6 +34,10 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
 
     // Create controller-specific parameters
     // createParam(XDMclfString, asynParamInt32, &this->mclf_);
+    createParam(XDstatString, asynParamInt32, &this->statrb_);   // whole positioner status word
+    createParam(XDsspdString, asynParamInt32, &this->sspdrb_);   // sspd readback
+    createParam(XDeposString, asynParamInt32, &this->eposrb_);   // epos readback
+    createParam(XDdposString, asynParamInt32, &this->dposrb_);   // dpos readback
     // createParam(XDPtypString, asynParamInt32, &this->ptyp_);
     // createParam(XDPtypRbString, asynParamInt32, &this->ptyprb_);
     // createParam(XDCalString, asynParamInt32, &this->cal_);
@@ -89,19 +93,20 @@ extern "C" int XDCreateController(const char *portName, const char *XDPortName, 
     return (asynSuccess);
 }
 
-asynStatus XDController::poll()
-{
-  static const char *functionName = "XDController::poll";
-  sprintf(this->outString_, "EPOS=?");
-  asynStatus status = this->writeReadController();
-  if (status) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, 
-      "%s:%s: cannot connect obtain encoder position from controller\nStatus:%d",
-      driverName, functionName, status);
-  }
-  asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: EPOS: %s\n", this->inString_);
-  // asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController:poll;\n");
-}
+// asynStatus XDController::poll()
+// {
+//     static const char *functionName = "XDController::poll";
+//     sprintf(this->outString_, "EPOS=?");
+//     asynStatus status = this->writeReadController();
+//     if (status)
+//     {
+//         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+//                   "%s:%s: cannot connect obtain encoder position from controller\nStatus:%d",
+//                   driverName, functionName, status);
+//     }
+//     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: EPOS: %s\n", this->inString_);
+//     // asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController:poll;\n");
+// }
 
 /** Reports on status of the driver
  * \param[in] fp The file pointer on which report information will be written
@@ -146,43 +151,49 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
     asynStatus status = asynSuccess;
-    // XDAxis *pAxis = getAxis(pasynUser);
-    // static const char *functionName = "writeInt32";
+    XDAxis *pAxis = getAxis(pasynUser);
+    static const char *functionName = "writeInt32";
 
     // /* Set the parameter and readback in the parameter library.  This may be overwritten when we read back the
     //  * status at the end, but that's OK */
-    // status = setIntegerParam(pAxis->axisNo_, function, value);
+    status = setIntegerParam(pAxis->axisNo_, function, value);
 
-    // if (function == mclf_) {
-    //   /* set MCLF */
-    //   sprintf(pAxis->pC_->outString_, ":CHAN%d:MCLF:CURR %d", pAxis->axisNo_, value);
-    //   status = pAxis->pC_->writeController();
+    // if (function == mclf_)
+    // {
+    //     /* set MCLF */
+    //     sprintf(pAxis->pC_->outString_, ":CHAN%d:MCLF:CURR %d", pAxis->axisNo_, value);
+    //     status = pAxis->pC_->writeController();
     // }
-    // else if (function == ptyp_) {
-    //   /* set positioner type */
-    //   sprintf(pAxis->pC_->outString_, ":CHAN%d:PTYP %d", pAxis->axisNo_, value);
-    //   status = pAxis->pC_->writeController();
+    // else if (function == ptyp_)
+    // {
+    //     /* set positioner type */
+    //     sprintf(pAxis->pC_->outString_, ":CHAN%d:PTYP %d", pAxis->axisNo_, value);
+    //     status = pAxis->pC_->writeController();
     // }
-    // else if (function == cal_) {
-    //   /* send calibration command */
-    //   sprintf(pAxis->pC_->outString_, ":CAL%d", pAxis->axisNo_);
-    //   status = pAxis->pC_->writeController();
+    // else if (function == cal_)
+    // {
+    //     /* send calibration command */
+    //     sprintf(pAxis->pC_->outString_, ":CAL%d", pAxis->axisNo_);
+    //     status = pAxis->pC_->writeController();
     // }
-    // else {
-    //   /* Call base class method */
-    //   status = asynMotorController::writeInt32(pasynUser, value);
-    // }
-
-    // /* Do callbacks so higher layers see any changes */
-    // callParamCallbacks(pAxis->axisNo_);
-    // if (status)
-    //   asynPrint(pasynUser, ASYN_TRACE_ERROR,
-    //       "%s:%s: error, status=%d function=%d, value=%d\n",
-    //       driverName, functionName, status, function, value);
     // else
-    //   asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
-    //       "%s:%s: function=%d, value=%d\n",
-    //       driverName, functionName, function, value);
+    // {
+    //     /* Call base class method */
+    //     status = asynMotorController::writeInt32(pasynUser, value);
+    // }
+
+    status = asynMotorController::writeInt32(pasynUser, value);
+
+    /* Do callbacks so higher layers see any changes */
+    callParamCallbacks(pAxis->axisNo_);
+    if (status)
+        asynPrint(pasynUser, ASYN_TRACE_ERROR,
+                  "%s:%s: error, status=%d function=%d, value=%d\n",
+                  driverName, functionName, status, function, value);
+    else
+        asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
+                  "%s:%s: function=%d, value=%d\n",
+                  driverName, functionName, function, value);
     return status;
 }
 
@@ -192,22 +203,23 @@ static const iocshArg XDCreateControllerArg1 = {"XD port name", iocshArgString};
 static const iocshArg XDCreateControllerArg2 = {"Number of axes", iocshArgInt};
 static const iocshArg XDCreateControllerArg3 = {"Moving poll period (ms)", iocshArgInt};
 static const iocshArg XDCreateControllerArg4 = {"Idle poll period (ms)", iocshArgInt};
-static const iocshArg * const XDCreateControllerArgs[] = {&XDCreateControllerArg0,
-                                                            &XDCreateControllerArg1,
-                                                            &XDCreateControllerArg2,
-                                                            &XDCreateControllerArg3,
-                                                            &XDCreateControllerArg4};
+static const iocshArg *const XDCreateControllerArgs[] = {&XDCreateControllerArg0,
+                                                         &XDCreateControllerArg1,
+                                                         &XDCreateControllerArg2,
+                                                         &XDCreateControllerArg3,
+                                                         &XDCreateControllerArg4};
 static const iocshFuncDef XDCreateControllerDef = {"XDCreateController", 5, XDCreateControllerArgs};
 static void XDCreateContollerCallFunc(const iocshArgBuf *args)
 {
-  XDCreateController(args[0].sval, args[1].sval, args[2].ival, args[3].ival, args[4].ival);
+    XDCreateController(args[0].sval, args[1].sval, args[2].ival, args[3].ival, args[4].ival);
 }
 
 static void XDMotorRegister(void)
 {
-  iocshRegister(&XDCreateControllerDef, XDCreateContollerCallFunc);
+    iocshRegister(&XDCreateControllerDef, XDCreateContollerCallFunc);
 }
 
-extern "C" {
-epicsExportRegistrar(XDMotorRegister);
+extern "C"
+{
+    epicsExportRegistrar(XDMotorRegister);
 }
