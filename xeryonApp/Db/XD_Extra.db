@@ -1,0 +1,27 @@
+record(longin, "$(P)$(M)StatusRb") {
+  field(DESC, "status word")
+  field(DTYP, "asynInt32")
+  field(SCAN, "I/O Intr")
+  field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))STAT")
+}
+
+record(longin, "$(P)$(M)sspdRb") {
+  field(DESC, "velocity setpoint")
+  field(DTYP, "asynInt32")
+  field(SCAN, "I/O Intr")
+  field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SSPD")
+}
+
+record(longin, "$(P)$(M)eposRb") {
+  field(DESC, "encoder position")
+  field(DTYP, "asynInt32")
+  field(SCAN, "I/O Intr")
+  field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))EPOS")
+}
+
+record(longin, "$(P)$(M)dposRb") {
+  field(DESC, "target position")
+  field(DTYP, "asynInt32")
+  field(SCAN, "I/O Intr")
+  field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DPOS")
+}
