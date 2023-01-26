@@ -1,0 +1,7 @@
+:toc:
+Dr. Niko Kivel <niko.kivel@lightsoure.ce>
+
+= motorXeryon
+
+== Setup
+Each stage comes with a set of parameters that need to be loaded into the controller manually.
