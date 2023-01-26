@@ -48,9 +48,9 @@ private:
     // from smarAct still needs fixing
     // TODO: check and add support for XD controller features
 protected:
+    int statrb_; /**< axis status word readback */
     int mclf_; /**< MCL frequency */
 #define FIRST_XD_PARAM mclf_
-    int statrb_; /**< axis status word readback */
     int eposrb_; /**< axis encoder readback */
     int dposrb_; /**< axis target position readback */
     int sspdrb_; /**< axis velocity setpoiny readback */

@@ -110,23 +110,25 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   static const char *functionName = "move";
 
   std::cout << "===========================================================\n";
-  // // Set hold time
-  // sprintf(pC_->outString_, ":CHAN%d:MMOD %d", channel_, relative>0?1:0);
-  // status = pC_->writeController();
-  // // Set acceleration
-  // sprintf(pC_->outString_, ":CHAN%d:ACC %f", channel_, acceleration*PULSES_PER_STEP);
-  // status = pC_->writeController();
-  // Set velocity
+  std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
   std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
   std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
   std::cout << "III: " << functionName << " accele:   " << acceleration << std::endl;
+  std::cout << "===========================================================\n";
+
+  // Set velocity
   sprintf(pC_->outString_, "SSPD=%d", (int)maxVelocity);
   status = pC_->writeController();
-  std::cout << "III: " << functionName << " position: " << position << std::endl;
-  sprintf(pC_->outString_, "DPOS=%d", (int)position);
-  std::cout << "III: " << functionName << " DPOS:     " << pC_->outString_ << std::endl;
+  // set absolute or relative movement target
+  if (relative)
+  {
+    sprintf(pC_->outString_, "STEP=%d", (int)position);
+  }
+  else
+  {
+    sprintf(pC_->outString_, "DPOS=%d", (int)position);
+  }
   status = pC_->writeController();
-  std::cout << "===========================================================\n";
 
   return status;
 }
@@ -137,35 +139,10 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
   static const char *functionName = "homeAxis";
   std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
   printf("Home command received %d\n", forwards);
-  // unsigned short refOpt = 0;
 
-  // if (forwards==0){
-  //   refOpt |= START_DIRECTION;
-  // }
-  // refOpt |= AUTO_ZERO;
-
-  // // Set default reference options - direction and autozero
-  // printf("ref opt: %d\n", refOpt);
-  // sprintf(pC_->outString_, ":CHAN%d:REF:OPT %d", channel_, refOpt);
-  // status = pC_->writeController();
-  // pC_->clearErrors();
-
-  // // Set hold time
-  // sprintf(pC_->outString_, ":CHAN%d:HOLD %d", channel_, HOLD_FOREVER);
-  // status = pC_->writeController();
-  // pC_->clearErrors();
-  // // Set acceleration
-  // sprintf(pC_->outString_, ":CHAN%d:ACC %f", channel_, acceleration*PULSES_PER_STEP);
-  // status = pC_->writeController();
-  // pC_->clearErrors();
-  // // Set velocity
-  // sprintf(pC_->outString_, ":CHAN%d:VEL %f", channel_, maxVelocity*PULSES_PER_STEP);
-  // status = pC_->writeController();
-  // pC_->clearErrors();
   // Begin move
   sprintf(pC_->outString_, "INDX=%d", forwards);
   status = pC_->writeController();
-  // pC_->clearErrors();
 
   return status;
 }
@@ -271,7 +248,7 @@ asynStatus XDAxis::poll(bool *moving)
   // encoderPosition = (double)strtod(pC_->inString_, NULL);
   // encoderPosition /= PULSES_PER_STEP;
   encoderPosition = this->decodeReply(pC_->inString_);
-  setDoubleParam(pC_->motorEncoderPosition_, encoderPosition);
+  setDoubleParam(pC_->motorEncoderPosition_, (double)encoderPosition);
   setIntegerParam(pC_->eposrb_, encoderPosition);
 
   // Read the current theoretical position
@@ -297,7 +274,6 @@ asynStatus XDAxis::poll(bool *moving)
   // targetPosition /= PULSES_PER_STEP;
   targetVelocity = this->decodeReply(pC_->inString_);
   setIntegerParam(pC_->sspdrb_, targetVelocity);
-
 
   // // Read the drive power on status
   // sprintf(pC_->outString_, "ENBL=?");
