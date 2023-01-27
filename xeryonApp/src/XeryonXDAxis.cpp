@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <iocsh.h>
 #include <epicsThread.h>
 
@@ -61,15 +60,15 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   asynStatus status = asynSuccess;
   static const char *functionName = "move";
 
-  std::cout << "===========================================================\n";
-  std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
-  std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
-  std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
-  std::cout << "III: " << functionName << " accel:    " << acceleration << std::endl;
-  std::cout << "III: " << functionName << " MRES:     " << pC_->motorResolution_ << std::endl;
-  std::cout << "III: " << functionName << " MR res:   " << pC_->motorRecResolution_ << std::endl;
-  std::cout << "III: " << functionName << " Enc ratio:" << pC_->motorEncoderRatio_ << std::endl;
-  std::cout << "===========================================================\n";
+  // std::cout << "===========================================================\n";
+  // std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
+  // std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
+  // std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
+  // std::cout << "III: " << functionName << " accel:    " << acceleration << std::endl;
+  // std::cout << "III: " << functionName << " MRES:     " << pC_->motorResolution_ << std::endl;
+  // std::cout << "III: " << functionName << " MR res:   " << pC_->motorRecResolution_ << std::endl;
+  // std::cout << "III: " << functionName << " Enc ratio:" << pC_->motorEncoderRatio_ << std::endl;
+  // std::cout << "===========================================================\n";
 
   // Set velocity
   /*
@@ -105,27 +104,12 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
 {
   asynStatus status = asynSuccess;
   static const char *functionName = "homeAxis";
-  std::cout << "======================================================" << std::endl;
-  asynPrint(pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::%s: dir -> %u\n", functionName, forwards);
-  std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
 
-  /*
-    TODO: this doesn't work when the controller is power cycled
-    I assume this is due to wrong state of the controller for the MR to issue the command
-  */
-  // if (!pC_->motorStatusHomed_)
-  // {
-  //   std::cout << "!!! axis is not referenced yet" << std::endl;
-  //   setIntegerParam(pC_->motorStatusMoving_, 0);
-  //   setIntegerParam(pC_->motorStatusDone_, 1);
-  //   callParamCallbacks();
-  //   sleep(5);
-  // }
+  std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
 
   // Begin move
   sprintf(pC_->outString_, "INDX=%d", forwards);
   status = pC_->writeController();
-  std::cout << "======================================================" << std::endl;
 
   return status;
 }
@@ -170,6 +154,7 @@ asynStatus XDAxis::poll(bool *moving)
       - get rid of the ugly `goto`
       - out source status to a utility class instance to clean up the code here
   */
+
   bool isAmpEnabled;
   bool isForceZero;
   bool isMotorOn;
