@@ -11,6 +11,9 @@
 
 #define XDindxString "INDX"
 
+#define XDptolString "PTOL"
+#define XDpto2String "PTO2"
+
 class epicsShareClass XDController : public asynMotorController
 {
 public:
@@ -34,7 +37,9 @@ private:
 protected:
     int statrb_; /**< axis status word readback */
 #define FIRST_XD_PARAM statrb_
-    int indx_; /**< axis encoder readback */
+    int indx_; /**< issue index search command */
+    int ptol_; /**< positioning tolerance 1 */
+    int pto2_; /**< positioning tolerance 2 */
     int eposrb_; /**< axis encoder readback */
     int dposrb_; /**< axis target position readback */
     int sspdrb_; /**< axis velocity setpoiny readback */

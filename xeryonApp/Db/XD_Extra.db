@@ -35,3 +35,47 @@ record(mbbo, "$(P)$(M)indx") {
   field(ONST, "reverse")
   field(ONVL, 1)
 }
+
+record(longout, "$(P)$(M)ptol") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTOL")
+}
+
+record(longout, "$(P)$(M)pto2") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTO2")
+}
+
+record(mbbo, "$(P)$(M)indx") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))INDX")
+  field(ZRST, "forward")
+  field(ZRVL, 0)
+  field(ONST, "reverse")
+  field(ONVL, 1)
+}
+
+record(longout, "$(P)$(M)ptol") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTOL")
+}
+
+record(longout, "$(P)$(M)pto2") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTO2")
+}
+
+record(mbbo, "$(P)$(M)indx") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))INDX")
+  field(ZRST, "forward")
+  field(ZRVL, 0)
+  field(ONST, "reverse")
+  field(ONVL, 1)
+}
