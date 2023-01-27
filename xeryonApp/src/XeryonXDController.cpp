@@ -33,10 +33,12 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating controller\n");
 
     // Create controller-specific parameters
-    createParam(XDstatString, asynParamInt32, &this->statrb_);   // whole positioner status word
-    createParam(XDsspdString, asynParamInt32, &this->sspdrb_);   // sspd readback
-    createParam(XDeposString, asynParamInt32, &this->eposrb_);   // epos readback
-    createParam(XDdposString, asynParamInt32, &this->dposrb_);   // dpos readback
+    createParam(XDstatString, asynParamInt32, &this->statrb_); // whole positioner status word
+    createParam(XDsspdString, asynParamInt32, &this->sspdrb_); // sspd readback
+    createParam(XDeposString, asynParamInt32, &this->eposrb_); // epos readback
+    createParam(XDdposString, asynParamInt32, &this->dposrb_); // dpos readback
+
+    createParam(XDindxString, asynParamInt32, &this->indx_);
 
     /* Connect to XD controller */
     status = pasynOctetSyncIO->connect(XDPortName, 0, &pasynUserController_, NULL);
@@ -86,21 +88,6 @@ extern "C" int XDCreateController(const char *portName, const char *XDPortName, 
     new XDController(portName, XDPortName, numAxes, movingPollPeriod / 1000., idlePollPeriod / 1000.);
     return (asynSuccess);
 }
-
-// asynStatus XDController::poll()
-// {
-//     static const char *functionName = "XDController::poll";
-//     sprintf(this->outString_, "EPOS=?");
-//     asynStatus status = this->writeReadController();
-//     if (status)
-//     {
-//         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-//                   "%s:%s: cannot connect obtain encoder position from controller\nStatus:%d",
-//                   driverName, functionName, status);
-//     }
-//     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: EPOS: %s\n", this->inString_);
-//     // asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController:poll;\n");
-// }
 
 /** Reports on status of the driver
  * \param[in] fp The file pointer on which report information will be written
@@ -152,31 +139,18 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
     //  * status at the end, but that's OK */
     status = setIntegerParam(pAxis->axisNo_, function, value);
 
-    // if (function == mclf_)
-    // {
-    //     /* set MCLF */
-    //     sprintf(pAxis->pC_->outString_, ":CHAN%d:MCLF:CURR %d", pAxis->axisNo_, value);
-    //     status = pAxis->pC_->writeController();
-    // }
-    // else if (function == ptyp_)
-    // {
-    //     /* set positioner type */
-    //     sprintf(pAxis->pC_->outString_, ":CHAN%d:PTYP %d", pAxis->axisNo_, value);
-    //     status = pAxis->pC_->writeController();
-    // }
-    // else if (function == cal_)
-    // {
-    //     /* send calibration command */
-    //     sprintf(pAxis->pC_->outString_, ":CAL%d", pAxis->axisNo_);
-    //     status = pAxis->pC_->writeController();
-    // }
-    // else
-    // {
-    //     /* Call base class method */
-    //     status = asynMotorController::writeInt32(pasynUser, value);
-    // }
-
-    status = asynMotorController::writeInt32(pasynUser, value);
+    if (function == indx_)
+    {
+        /* move to index (homing) */
+        // pAxis->axisNo_
+        sprintf(pAxis->pC_->outString_, "INDX=%d", value);
+        status = pAxis->pC_->writeController();
+    }
+    else
+    {
+        /* Call base class method */
+        status = asynMotorController::writeInt32(pasynUser, value);
+    }
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks(pAxis->axisNo_);

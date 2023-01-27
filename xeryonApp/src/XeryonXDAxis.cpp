@@ -25,7 +25,6 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
 {
   asynStatus status;
 
-  asynPrint(pC->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
   channel_ = axisNo;
   // stop unsolicited data transfer
@@ -60,16 +59,6 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   asynStatus status = asynSuccess;
   static const char *functionName = "move";
 
-  // std::cout << "===========================================================\n";
-  // std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
-  // std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
-  // std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
-  // std::cout << "III: " << functionName << " accel:    " << acceleration << std::endl;
-  // std::cout << "III: " << functionName << " MRES:     " << pC_->motorResolution_ << std::endl;
-  // std::cout << "III: " << functionName << " MR res:   " << pC_->motorRecResolution_ << std::endl;
-  // std::cout << "III: " << functionName << " Enc ratio:" << pC_->motorEncoderRatio_ << std::endl;
-  // std::cout << "===========================================================\n";
-
   // Set velocity
   /*
     TODO: SSPD is in weird units, 1 um/s for linear actuators and 0.01 deg/s for angular
@@ -77,14 +66,6 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   */
   sprintf(pC_->outString_, "SSPD=%d", (int)maxVelocity);
   status = pC_->writeController();
-
-  // recover from potential stopped move
-  /*
-    TODO: this doesn't work
-    check is STOP-stade can be read and linked to CNEN and ERROR
-  sprintf(pC_->outString_, "CONT=1");
-  status = pC_->writeController();
-  */
 
   // set absolute or relative movement target
   if (relative)
@@ -119,13 +100,9 @@ asynStatus XDAxis::stop(double acceleration)
   asynStatus status;
   static const char *functionName = "stopAxis";
 
-  // std::cout << "III: " << functionName << " ====> STOP <==== " << std::endl;
-  // std::cout << "III: " << functionName << " ====> STOP NO EXECUTION !!! <==== " << std::endl;
-
-  // TODO: Implement recovery from this state to be able to actually use it.
-
-  // sprintf(pC_->outString_, "STOP=1");
-  // status = pC_->writeController();
+  // Force the piezo signals to zero volt
+  sprintf(pC_->outString_, "ZERO");
+  status = pC_->writeController();
 
   return status;
 }
@@ -203,7 +180,7 @@ asynStatus XDAxis::poll(bool *moving)
   isSearchingOptimalFrequency = (chanState & (1 << 17));
 
   *moving = !isPositionReached;
-  setIntegerParam(pC_->motorStatusDone_, isPositionReached);
+  setIntegerParam(pC_->motorStatusDone_, (isPositionReached || isForceZero));
   setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
   setIntegerParam(pC_->motorStatusHasEncoder_, 1);  // Xeryon axis have encoders
   setIntegerParam(pC_->motorStatusGainSupport_, !isForceZero);
@@ -265,14 +242,6 @@ asynStatus XDAxis::poll(bool *moving)
   // if (comStatus) goto skip;
   // positionerType = atoi(pC_->inString_);
   // setIntegerParam(pC_->ptyprb_, positionerType);
-
-  // controller is in STAT=0x11 (17) after power cycle
-  // overright MSTA bits to motion
-  if (!isEncoderValid && isForceZero)
-  {
-    setIntegerParam(pC_->motorStatusMoving_, 0);
-    setIntegerParam(pC_->motorStatusDone_, 1);
-  }
 
 skip:
   setIntegerParam(pC_->motorStatusProblem_, comStatus ? 1 : 0);

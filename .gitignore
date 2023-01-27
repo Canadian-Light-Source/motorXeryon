@@ -1,2 +1,3 @@
 xeryonApp/src/legacy/*
 Makefile
+.vscode/settings.json

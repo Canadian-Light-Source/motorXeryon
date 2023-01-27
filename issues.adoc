@@ -1,0 +1,10 @@
+:toc:
+
+= Xeryon open issues
+Dr. Niko Kivel <niko.kivel@lightsource.ca>
+
+== .VELO
+The velocity is handled wrongly right now because of the controller expecting the values in "0.010 mm/s" or "0.01 deg/s".
+However, the motorRecord is setting the value in "steps/s"
+
+== warp around when going negative on angular axis
