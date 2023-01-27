@@ -59,16 +59,6 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   asynStatus status = asynSuccess;
   static const char *functionName = "move";
 
-  // std::cout << "===========================================================\n";
-  // std::cout << "III: " << functionName << " realtive: " << relative << std::endl;
-  // std::cout << "III: " << functionName << " max velo: " << maxVelocity << std::endl;
-  // std::cout << "III: " << functionName << " min velo: " << minVelocity << std::endl;
-  // std::cout << "III: " << functionName << " accel:    " << acceleration << std::endl;
-  // std::cout << "III: " << functionName << " MRES:     " << pC_->motorResolution_ << std::endl;
-  // std::cout << "III: " << functionName << " MR res:   " << pC_->motorRecResolution_ << std::endl;
-  // std::cout << "III: " << functionName << " Enc ratio:" << pC_->motorEncoderRatio_ << std::endl;
-  // std::cout << "===========================================================\n";
-
   // Set velocity
   /*
     TODO: SSPD is in weird units, 1 um/s for linear actuators and 0.01 deg/s for angular
@@ -76,14 +66,6 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
   */
   sprintf(pC_->outString_, "SSPD=%d", (int)maxVelocity);
   status = pC_->writeController();
-
-  // recover from potential stopped move
-  /*
-    TODO: this doesn't work
-    check is STOP-stade can be read and linked to CNEN and ERROR
-  sprintf(pC_->outString_, "CONT=1");
-  status = pC_->writeController();
-  */
 
   // set absolute or relative movement target
   if (relative)
