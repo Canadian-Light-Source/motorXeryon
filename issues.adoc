@@ -1,0 +1,6 @@
+:toc:
+
+= Xeryon open issues
+Dr. Niko Kivel <niko.kivel@lightsource.ca>
+
+== warp around when going negative on angular axis

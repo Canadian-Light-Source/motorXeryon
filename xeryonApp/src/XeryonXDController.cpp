@@ -89,21 +89,6 @@ extern "C" int XDCreateController(const char *portName, const char *XDPortName, 
     return (asynSuccess);
 }
 
-// asynStatus XDController::poll()
-// {
-//     static const char *functionName = "XDController::poll";
-//     sprintf(this->outString_, "EPOS=?");
-//     asynStatus status = this->writeReadController();
-//     if (status)
-//     {
-//         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-//                   "%s:%s: cannot connect obtain encoder position from controller\nStatus:%d",
-//                   driverName, functionName, status);
-//     }
-//     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: EPOS: %s\n", this->inString_);
-//     // asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController:poll;\n");
-// }
-
 /** Reports on status of the driver
  * \param[in] fp The file pointer on which report information will be written
  * \param[in] level The level of report detail desired
@@ -166,18 +151,6 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
         /* Call base class method */
         status = asynMotorController::writeInt32(pasynUser, value);
     }
-    // else if (function == ptyp_)
-    // {
-    //     /* set positioner type */
-    //     sprintf(pAxis->pC_->outString_, ":CHAN%d:PTYP %d", pAxis->axisNo_, value);
-    //     status = pAxis->pC_->writeController();
-    // }
-    // else if (function == cal_)
-    // {
-    //     /* send calibration command */
-    //     sprintf(pAxis->pC_->outString_, ":CAL%d", pAxis->axisNo_);
-    //     status = pAxis->pC_->writeController();
-    // }
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks(pAxis->axisNo_);
