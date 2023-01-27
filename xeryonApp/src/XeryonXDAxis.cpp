@@ -104,12 +104,8 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
 {
   asynStatus status = asynSuccess;
   static const char *functionName = "homeAxis";
-  std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
 
-  /*
-    TODO: this doesn't work when the controller is power cycled
-    I assume this is due to wrong state of the controller for the MR to issue the command
-  */
+  std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
 
   // Begin move
   sprintf(pC_->outString_, "INDX=%d", forwards);
@@ -158,6 +154,8 @@ asynStatus XDAxis::poll(bool *moving)
       - get rid of the ugly `goto`
       - out source status to a utility class instance to clean up the code here
   */
+
+  bool isAmpEnabled;
   bool isForceZero;
   bool isMotorOn;
   bool isClosedLoop;
@@ -189,6 +187,7 @@ asynStatus XDAxis::poll(bool *moving)
   chanState = (int)this->decodeReply(pC_->inString_);
   setIntegerParam(pC_->statrb_, chanState);
 
+  isAmpEnabled = (chanState & (1 << 1));
   isForceZero = (chanState & (1 << 4));
   isMotorOn = (chanState & (1 << 5));
   isClosedLoop = (chanState & (1 << 6));
@@ -206,10 +205,8 @@ asynStatus XDAxis::poll(bool *moving)
   *moving = !isPositionReached;
   setIntegerParam(pC_->motorStatusDone_, isPositionReached);
   setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
-  // setIntegerParam(pC_->motorStatusHasEncoder_, isEncoderValid);
-  setIntegerParam(pC_->motorStatusHasEncoder_, 1);
-  // setIntegerParam(pC_->motorStatusGainSupport_, isClosedLoop);
-  setIntegerParam(pC_->motorStatusGainSupport_, 1);
+  setIntegerParam(pC_->motorStatusHasEncoder_, 1);  // Xeryon axis have encoders
+  setIntegerParam(pC_->motorStatusGainSupport_, !isForceZero);
   setIntegerParam(pC_->motorStatusHomed_, isEncoderValid);
   setIntegerParam(pC_->motorStatusHighLimit_, isAtLeftEnd);
   setIntegerParam(pC_->motorStatusLowLimit_, isAtRightEnd);
@@ -268,6 +265,14 @@ asynStatus XDAxis::poll(bool *moving)
   // if (comStatus) goto skip;
   // positionerType = atoi(pC_->inString_);
   // setIntegerParam(pC_->ptyprb_, positionerType);
+
+  // controller is in STAT=0x11 (17) after power cycle
+  // overright MSTA bits to motion
+  if (!isEncoderValid && isForceZero)
+  {
+    setIntegerParam(pC_->motorStatusMoving_, 0);
+    setIntegerParam(pC_->motorStatusDone_, 1);
+  }
 
 skip:
   setIntegerParam(pC_->motorStatusProblem_, comStatus ? 1 : 0);
