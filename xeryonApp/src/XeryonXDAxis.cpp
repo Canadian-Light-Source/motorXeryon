@@ -25,7 +25,6 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
 {
   asynStatus status;
 
-  asynPrint(pC->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
   channel_ = axisNo;
   // stop unsolicited data transfer

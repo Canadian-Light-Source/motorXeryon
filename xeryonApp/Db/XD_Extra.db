@@ -25,3 +25,13 @@ record(longin, "$(P)$(M)dposRb") {
   field(SCAN, "I/O Intr")
   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DPOS")
 }
+
+record(mbbo, "$(P)$(M)indx") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))INDX")
+  field(ZRST, "forward")
+  field(ZRVL, 0)
+  field(ONST, "reverse")
+  field(ONVL, 1)
+}
