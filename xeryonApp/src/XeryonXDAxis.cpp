@@ -202,7 +202,7 @@ asynStatus XDAxis::poll(bool *moving)
   isSearchingOptimalFrequency = (chanState & (1 << 17));
 
   *moving = !isPositionReached;
-  setIntegerParam(pC_->motorStatusDone_, isPositionReached);
+  setIntegerParam(pC_->motorStatusDone_, (isPositionReached || isForceZero));
   setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
   setIntegerParam(pC_->motorStatusHasEncoder_, 1);  // Xeryon axis have encoders
   setIntegerParam(pC_->motorStatusGainSupport_, !isForceZero);
@@ -264,14 +264,6 @@ asynStatus XDAxis::poll(bool *moving)
   // if (comStatus) goto skip;
   // positionerType = atoi(pC_->inString_);
   // setIntegerParam(pC_->ptyprb_, positionerType);
-
-  // controller is in STAT=0x11 (17) after power cycle
-  // overright MSTA bits to motion
-  if (!isEncoderValid && isForceZero)
-  {
-    setIntegerParam(pC_->motorStatusMoving_, 0);
-    setIntegerParam(pC_->motorStatusDone_, 1);
-  }
 
 skip:
   setIntegerParam(pC_->motorStatusProblem_, comStatus ? 1 : 0);
