@@ -118,13 +118,9 @@ asynStatus XDAxis::stop(double acceleration)
   asynStatus status;
   static const char *functionName = "stopAxis";
 
-  // std::cout << "III: " << functionName << " ====> STOP <==== " << std::endl;
-  // std::cout << "III: " << functionName << " ====> STOP NO EXECUTION !!! <==== " << std::endl;
-
-  // TODO: Implement recovery from this state to be able to actually use it.
-
-  // sprintf(pC_->outString_, "STOP=1");
-  // status = pC_->writeController();
+  // Force the piezo signals to zero volt
+  sprintf(pC_->outString_, "ZERO");
+  status = pC_->writeController();
 
   return status;
 }
