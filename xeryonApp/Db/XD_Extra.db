@@ -70,6 +70,15 @@ record(longout, "$(P)$(M)pto2") {
   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTO2")
 }
 
+record(bo, "$(P)$(M)test") {
+  field(DESC, "description")
+  field(DTYP, "asynInt32")
+  field(ZNAM, "LEDs off")
+  field(ONAM, "LEDs in test mode")
+  field(HIGH, 2)
+  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TEST")
+}
+
 record(mbbo, "$(P)$(M)indx") {
   field(DESC, "description")
   field(DTYP, "asynInt32")

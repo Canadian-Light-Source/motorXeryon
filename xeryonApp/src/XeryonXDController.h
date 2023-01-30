@@ -14,6 +14,8 @@
 #define XDptolString "PTOL"
 #define XDpto2String "PTO2"
 
+#define XDtestString "TEST"
+
 class epicsShareClass XDController : public asynMotorController
 {
 public:
@@ -40,6 +42,7 @@ protected:
     int indx_; /**< issue index search command */
     int ptol_; /**< positioning tolerance 1 */
     int pto2_; /**< positioning tolerance 2 */
+    int test_; /**< test LEDs (XD-M and XD-19) */
     int eposrb_; /**< axis encoder readback */
     int dposrb_; /**< axis target position readback */
     int sspdrb_; /**< axis velocity setpoiny readback */

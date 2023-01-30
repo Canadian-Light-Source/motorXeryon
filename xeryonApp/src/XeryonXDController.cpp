@@ -42,6 +42,8 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     createParam(XDptolString, asynParamInt32, &this->ptol_);
     createParam(XDpto2String, asynParamInt32, &this->pto2_);
 
+    createParam(XDtestString, asynParamInt32, &this->test_);
+
     /* Connect to XD controller */
     status = pasynOctetSyncIO->connect(XDPortName, 0, &pasynUserController_, NULL);
     pasynOctetSyncIO->setInputEos(pasynUserController_, "\n", 1);
@@ -158,6 +160,12 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
     {
         // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "PTO2=%d", value);
+        status = pAxis->pC_->writeController();
+    }
+    else if (function == test_)
+    {
+        // pAxis->axisNo_
+        sprintf(pAxis->pC_->outString_, "TEST=%d", value);
         status = pAxis->pC_->writeController();
     }
     else
