@@ -26,6 +26,13 @@ record(longin, "$(P)$(M)dposRb") {
   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DPOS")
 }
 
+record(longin, "$(P)$(M)freqRb") {
+  field(DESC, "current exictation frequency")
+  field(DTYP, "asynInt32")
+  field(SCAN, "I/O Intr")
+  field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FREQ")
+}
+
 record(mbbo, "$(P)$(M)indx") {
   field(DESC, "description")
   field(DTYP, "asynInt32")
