@@ -1,4 +1,5 @@
-record(longin, "$(P)$(M)StatusRb") {
+# readback values
+record(longin, "$(P)$(M)statRb") {
   field(DESC, "status word")
   field(DTYP, "asynInt32")
   field(SCAN, "I/O Intr")
@@ -33,8 +34,11 @@ record(longin, "$(P)$(M)freqRb") {
   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FREQ")
 }
 
+# set values or trigger action
+
+## search for index mark
 record(mbbo, "$(P)$(M)indx") {
-  field(DESC, "description")
+  field(DESC, "search index")
   field(DTYP, "asynInt32")
   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))INDX")
   field(ZRST, "forward")
@@ -43,55 +47,24 @@ record(mbbo, "$(P)$(M)indx") {
   field(ONVL, 1)
 }
 
+## set positioning tolerance
 record(longout, "$(P)$(M)ptol") {
-  field(DESC, "description")
+  field(DESC, "positioning tolerance")
   field(DTYP, "asynInt32")
   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTOL")
 }
-
+## set positioning tolerance 2
 record(longout, "$(P)$(M)pto2") {
-  field(DESC, "description")
+  field(DESC, "positioning tolerance 2")
   field(DTYP, "asynInt32")
   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTO2")
 }
-
-record(mbbo, "$(P)$(M)indx") {
-  field(DESC, "description")
-  field(DTYP, "asynInt32")
-  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))INDX")
-  field(ZRST, "forward")
-  field(ZRVL, 0)
-  field(ONST, "reverse")
-  field(ONVL, 1)
-}
-
-record(longout, "$(P)$(M)ptol") {
-  field(DESC, "description")
-  field(DTYP, "asynInt32")
-  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTOL")
-}
-
-record(longout, "$(P)$(M)pto2") {
-  field(DESC, "description")
-  field(DTYP, "asynInt32")
-  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PTO2")
-}
-
+## test LEDs
 record(bo, "$(P)$(M)test") {
-  field(DESC, "description")
+  field(DESC, "test LEDS")
   field(DTYP, "asynInt32")
   field(ZNAM, "LEDs off")
   field(ONAM, "LEDs in test mode")
   field(HIGH, 2)
   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TEST")
-}
-
-record(mbbo, "$(P)$(M)indx") {
-  field(DESC, "description")
-  field(DTYP, "asynInt32")
-  field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))INDX")
-  field(ZRST, "forward")
-  field(ZRVL, 0)
-  field(ONST, "reverse")
-  field(ONVL, 1)
 }

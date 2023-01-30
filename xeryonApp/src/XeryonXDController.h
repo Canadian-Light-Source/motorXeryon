@@ -14,6 +14,8 @@
 #define XDptolString "PTOL"
 #define XDpto2String "PTO2"
 
+#define XDfreqString "FREQ"
+
 #define XDtestString "TEST"
 
 class epicsShareClass XDController : public asynMotorController
@@ -43,6 +45,10 @@ protected:
     int ptol_; /**< positioning tolerance 1 */
     int pto2_; /**< positioning tolerance 2 */
     int test_; /**< test LEDs (XD-M and XD-19) */
+    int freqrb_; /**< Excitation frequency currently in use */
+    // int ofrqrb_; /**< Optimal frequency as determined by FFRQ */
+    // int currrb_; /**< Current consumed by the piezomotor */
+    int timerb_; /**< Time stamp: resolution 0.1 ms */
     int eposrb_; /**< axis encoder readback */
     int dposrb_; /**< axis target position readback */
     int sspdrb_; /**< axis velocity setpoiny readback */

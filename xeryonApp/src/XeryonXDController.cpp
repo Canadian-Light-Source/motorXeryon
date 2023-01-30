@@ -37,11 +37,15 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     createParam(XDsspdString, asynParamInt32, &this->sspdrb_); // sspd readback
     createParam(XDeposString, asynParamInt32, &this->eposrb_); // epos readback
     createParam(XDdposString, asynParamInt32, &this->dposrb_); // dpos readback
+    // extra stage info
+    createParam(XDfreqString, asynParamInt32, &this->freqrb_);
 
+    // stage commands
     createParam(XDindxString, asynParamInt32, &this->indx_);
     createParam(XDptolString, asynParamInt32, &this->ptol_);
     createParam(XDpto2String, asynParamInt32, &this->pto2_);
 
+    // LED test
     createParam(XDtestString, asynParamInt32, &this->test_);
 
     /* Connect to XD controller */

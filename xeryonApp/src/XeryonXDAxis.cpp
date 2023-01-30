@@ -149,6 +149,8 @@ asynStatus XDAxis::poll(bool *moving)
 
   int chanState;
 
+  int reply=0;
+
   double encoderPosition;
   double targetPosition;
   double targetVelocity;
@@ -182,7 +184,7 @@ asynStatus XDAxis::poll(bool *moving)
   *moving = !isPositionReached;
   setIntegerParam(pC_->motorStatusDone_, (isPositionReached || isForceZero));
   setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
-  setIntegerParam(pC_->motorStatusHasEncoder_, 1);  // Xeryon axis have encoders
+  setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
   setIntegerParam(pC_->motorStatusGainSupport_, !isForceZero);
   setIntegerParam(pC_->motorStatusHomed_, isEncoderValid);
   setIntegerParam(pC_->motorStatusHighLimit_, isAtLeftEnd);
@@ -227,6 +229,15 @@ asynStatus XDAxis::poll(bool *moving)
   // targetPosition /= PULSES_PER_STEP;
   targetVelocity = this->decodeReply(pC_->inString_);
   setIntegerParam(pC_->sspdrb_, targetVelocity);
+
+  // Read the current exitation frequency
+  sprintf(pC_->outString_, "FREQ=?");
+  comStatus = pC_->writeReadController();
+  // asynPrint(pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
+  if (comStatus)
+    goto skip;
+  reply = this->decodeReply(pC_->inString_);
+  setIntegerParam(pC_->freqrb_, reply);
 
   // // Read the drive power on status
   // sprintf(pC_->outString_, "ENBL=?");
