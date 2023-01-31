@@ -28,7 +28,6 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
   callParamCallbacks();
 }
 
-
 void XDAxis::report(FILE *fp, int level)
 {
   if (level > 0)
@@ -89,40 +88,13 @@ asynStatus XDAxis::stop(double acceleration)
   return status;
 }
 
-// asynStatus XDAxis::setPosition(double position)
-// {
-//   asynStatus status=asynSuccess;
-
-//   // printf("Set position receieved\n");
-//   // sprintf(pC_->outString_, ":CHAN%d:POS %f", channel_, position*PULSES_PER_STEP);
-//   // status = pC_->writeController();
-//   return status;
-// }
-
-
 asynStatus XDAxis::poll(bool *moving)
 {
 
   /*
     TODO:
       - get rid of the ugly `goto`
-      - out source status to a utility class instance to clean up the code here
   */
-
-  bool isAmpEnabled;
-  bool isForceZero;
-  bool isMotorOn;
-  bool isClosedLoop;
-  bool isEncoderAtIndex;
-  bool isEncoderValid;
-  bool isSearchingIndex;
-  bool isPositionReached;
-  bool isEncoderError;
-  bool isScanning;
-  bool isAtLeftEnd;
-  bool isAtRightEnd;
-  bool isErrorLimit;
-  bool isSearchingOptimalFrequency;
 
   int chanState;
 
@@ -144,33 +116,17 @@ asynStatus XDAxis::poll(bool *moving)
   setIntegerParam(pC_->statrb_, chanState);
   this->setStatus(chanState);
 
-  isAmpEnabled = (chanState & (1 << 1));
-  isForceZero = (chanState & (1 << 4));
-  isMotorOn = (chanState & (1 << 5));
-  isClosedLoop = (chanState & (1 << 6));
-  isEncoderAtIndex = (chanState & (1 << 7));
-  isEncoderValid = (chanState & (1 << 8));
-  isSearchingIndex = (chanState & (1 << 9));
-  isPositionReached = (chanState & (1 << 10));
-  isEncoderError = (chanState & (1 << 12));
-  isScanning = (chanState & (1 << 13));
-  isAtLeftEnd = (chanState & (1 << 14));
-  isAtRightEnd = (chanState & (1 << 15));
-  isErrorLimit = (chanState & (1 << 16));
-  isSearchingOptimalFrequency = (chanState & (1 << 17));
-
-  *moving = !isPositionReached;
-  setIntegerParam(pC_->motorStatusDone_, (isPositionReached || isForceZero));
-  // setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
+  *moving = !this->getIsPositionReached();
+  setIntegerParam(pC_->motorStatusDone_, (this->getIsPositionReached() || this->getIsForceZero()));
   setIntegerParam(pC_->motorClosedLoop_, this->getIsClosedLoop());
   setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
-  setIntegerParam(pC_->motorStatusGainSupport_, !isForceZero);
-  setIntegerParam(pC_->motorStatusHomed_, isEncoderValid);
-  setIntegerParam(pC_->motorStatusHighLimit_, isAtLeftEnd);
-  setIntegerParam(pC_->motorStatusLowLimit_, isAtRightEnd);
-  setIntegerParam(pC_->motorStatusFollowingError_, isErrorLimit);
-  setIntegerParam(pC_->motorStatusProblem_, isErrorLimit);
-  setIntegerParam(pC_->motorStatusAtHome_, isEncoderAtIndex);
+  setIntegerParam(pC_->motorStatusGainSupport_, !this->getIsForceZero());
+  setIntegerParam(pC_->motorStatusHomed_, this->getIsEncoderValid());
+  setIntegerParam(pC_->motorStatusHighLimit_, this->getIsAtLeftEnd());
+  setIntegerParam(pC_->motorStatusLowLimit_, this->getIsAtRightEnd());
+  setIntegerParam(pC_->motorStatusFollowingError_, this->getIsErrorLimit());
+  setIntegerParam(pC_->motorStatusProblem_, this->getIsErrorLimit());
+  setIntegerParam(pC_->motorStatusAtHome_, this->getIsEncoderAtIndex());
 
   // Read the current encoder position
   sprintf(pC_->outString_, "EPOS=?");
@@ -217,21 +173,6 @@ asynStatus XDAxis::poll(bool *moving)
     goto skip;
   reply = this->decodeReply(pC_->inString_);
   setIntegerParam(pC_->freqrb_, reply);
-
-  // // Read the drive power on status
-  // sprintf(pC_->outString_, "ENBL=?");
-  // comStatus = pC_->writeReadController();
-  // if (comStatus) goto skip;
-  // // driveOn = atoi(pC_->inString_) ? 1:0;
-  // // setIntegerParam(pC_->motorStatusPowerOn_, driveOn);
-  // setIntegerParam(pC_->motorStatusProblem_, 1);
-
-  // // Read the currently selected positioner type
-  // sprintf(pC_->outString_, ":CHAN%d:PTYP?", channel_);
-  // comStatus = pC_->writeReadController();
-  // if (comStatus) goto skip;
-  // positionerType = atoi(pC_->inString_);
-  // setIntegerParam(pC_->ptyprb_, positionerType);
 
 skip:
   setIntegerParam(pC_->motorStatusProblem_, comStatus ? 1 : 0);
