@@ -26,7 +26,7 @@ public:
 
     /**
      * @brief Get the stage resolution.
-     * @return resolution in nm/step or deg/step 
+     * @return resolution in nm/step or deg/step
      */
     double getResolution() { return stage->encoderRes; };
 
@@ -52,7 +52,24 @@ public:
      * @brief Set the status word.
      * @param[in] s status word
      */
-    void setStatus(int s) { status = s; };
+    void setStatus(int s)
+    {
+        status = s;
+        isAmpEnabled = (status & (1 << 1));
+        isForceZero = (status & (1 << 4));
+        isMotorOn = (status & (1 << 5));
+        isClosedLoop = (status & (1 << 6));
+        isEncoderAtIndex = (status & (1 << 7));
+        isEncoderValid = (status & (1 << 8));
+        isSearchingIndex = (status & (1 << 9));
+        isPositionReached = (status & (1 << 10));
+        isEncoderError = (status & (1 << 12));
+        isScanning = (status & (1 << 13));
+        isAtLeftEnd = (status & (1 << 14));
+        isAtRightEnd = (status & (1 << 15));
+        isErrorLimit = (status & (1 << 16));
+        isSearchingOptimalFrequency = (status & (1 << 17));
+    };
 
     /**
      * @brief get the status word.
@@ -88,20 +105,20 @@ public:
 
 private:
     uint status;
-    bool isAmpEnabled = (status & (1 << 1));
-    bool isForceZero = (status & (1 << 4));
-    bool isMotorOn = (status & (1 << 5));
-    bool isClosedLoop = (status & (1 << 6));
-    bool isEncoderAtIndex = (status & (1 << 7));
-    bool isEncoderValid = (status & (1 << 8));
-    bool isSearchingIndex = (status & (1 << 9));
-    bool isPositionReached = (status & (1 << 10));
-    bool isEncoderError = (status & (1 << 12));
-    bool isScanning = (status & (1 << 13));
-    bool isAtLeftEnd = (status & (1 << 14));
-    bool isAtRightEnd = (status & (1 << 15));
-    bool isErrorLimit = (status & (1 << 16));
-    bool isSearchingOptimalFrequency = (status & (1 << 17));
+    bool isAmpEnabled;
+    bool isForceZero;
+    bool isMotorOn;
+    bool isClosedLoop;
+    bool isEncoderAtIndex;
+    bool isEncoderValid;
+    bool isSearchingIndex;
+    bool isPositionReached;
+    bool isEncoderError;
+    bool isScanning;
+    bool isAtLeftEnd;
+    bool isAtRightEnd;
+    bool isErrorLimit;
+    bool isSearchingOptimalFrequency;
 
     XeryonStages stages = XeryonStages();
 };

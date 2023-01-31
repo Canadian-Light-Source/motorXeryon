@@ -117,7 +117,7 @@ asynStatus XDAxis::poll(bool *moving)
   this->setStatus(chanState);
 
   *moving = !this->getIsPositionReached();
-  setIntegerParam(pC_->motorStatusDone_, (this->getIsPositionReached() || this->getIsForceZero()));
+  setIntegerParam(pC_->motorStatusDone_, ( (this->getIsPositionReached()) || (this->getIsForceZero()) ));
   setIntegerParam(pC_->motorClosedLoop_, this->getIsClosedLoop());
   setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
   setIntegerParam(pC_->motorStatusGainSupport_, !this->getIsForceZero());
