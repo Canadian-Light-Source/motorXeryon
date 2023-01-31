@@ -1,5 +1,6 @@
 #include <iocsh.h>
 #include <epicsThread.h>
+#include <epicsExit.h>
 
 #include <asynOctetSyncIO.h>
 
@@ -12,13 +13,6 @@
 
 static const char *driverName = "XeryonXDMotorDriver";
 
-/** Creates a new XDController object.
- * \param[in] portName             The name of the asyn port that will be created for this driver
- * \param[in] XDPortName         The name of the drvAsynIPPPort that was created previously to connect to the XD controller
- * \param[in] numAxes              The number of axes that this controller supports
- * \param[in] movingPollPeriod     The time between polls when any axis is moving
- * \param[in] idlePollPeriod       The time between polls when no axis is moving
- */
 XDController::XDController(const char *portName, const char *XDPortName, int numAxes,
                            double movingPollPeriod, double idlePollPeriod)
     : asynMotorController(portName, numAxes, NUM_XD_PARAMS,
@@ -76,34 +70,65 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating axes\n");
     for (axis = 0; axis < numAxes; axis++)
     {
-        new XDAxis(this, axis);
+        // new XDAxis(this, axis);
+        controllerAxes[axis] = std::make_shared<XDAxis>(this, axis);
+
+        bool lin = controllerAxes[0]->stage->isLinear;
+        // encoders[p]          = std::make_shared<Heidenhain::EIB74xEncoder>(encoderChannel, encoderHandle, encoderType);
     }
 
     startPoller(movingPollPeriod, idlePollPeriod, 2);
 }
 
-/** Creates a new XDController object.
- * Configuration command, called directly or from iocsh
- * \param[in] portName          The name of the asyn port that will be created for this driver
- * \param[in] XDPortName      The name of the drvAsynIPPPort that was created previously to connect to the XD controller
- * \param[in] numAxes           The number of axes that this controller supports
- * \param[in] movingPollPeriod  The time in ms between polls when any axis is moving
- * \param[in] idlePollPeriod    The time in ms between polls when no axis is moving
+/**
+ * @brief Creates a new XDController object.
+ * @details Configuration command, called directly or from iocsh
+ * @param[in] portName The name of the asyn port that will be created for this driver
+ * @param[in] XDPortName The name of the drvAsynIPPPort that was created previously to connect to the XD controller
+ * @param[in] numAxes The number of axes that this controller supports
+ * @param[in] movingPollPeriod The time in ms between polls when any axis is moving
+ * @param[in] idlePollPeriod The time in ms between polls when no axis is moving
  */
-extern "C" int XDCreateController(const char *portName, const char *XDPortName, int numAxes,
-                                  int movingPollPeriod, int idlePollPeriod)
+int XDCreateController(const std::string &portName, const std::string &XDPortName, const uint16_t numAxes, const double movingPollPeriod, const double idlePollPeriod)
 {
-    new XDController(portName, XDPortName, numAxes, movingPollPeriod / 1000., idlePollPeriod / 1000.);
+    try
+    {
+        ControllerHolder::getInstance().addController(portName, XDPortName, numAxes, movingPollPeriod, idlePollPeriod);
+    }
+    catch (const std::runtime_error &e)
+    {
+        std::cout << "Driver configuration problem: " << e.what() << std::endl
+                  << "Aborting initialization..." << std::endl;
+        epicsExit(-1);
+    }
     return (asynSuccess);
 }
 
-/** Reports on status of the driver
- * \param[in] fp The file pointer on which report information will be written
- * \param[in] level The level of report detail desired
- *
- * If details > 0 then information is printed about each axis.
- * After printing controller-specific information calls asynMotorController::report()
+/**
+ * @brief Configures an axis object in a respective controller.
+ * @details Configuration command, called directly or from iocsh
+ * @param[in] portName The name of the asyn port that will be created for this driver
+ * @param[in] axisNo The unique number of the axis object in the controller
+ * @param[in] stageType The type of the stage that is connected to the controller
  */
+int XDconfigureAxis(const std::string &portName, const int axisNo, const char *stageType)
+{
+    try
+    {
+        XDController *device =
+            ControllerHolder::getInstance().getController(portName).get();
+        std::shared_ptr<XDAxis> pAxis = device->getAxisPointer(axisNo);
+        pAxis->setStage(stageType);
+    }
+    catch (const std::out_of_range &e)
+    {
+        std::cout << "Controller with provided name and function does not exist. "
+                  << "Exception: " << e.what() << std::endl;
+        return (asynError);
+    }
+    return (asynSuccess);
+};
+
 void XDController::report(FILE *fp, int level)
 {
     fprintf(fp, "XD motor driver %s, numAxes=%d, moving poll period=%f, idle poll period=%f\n",
@@ -113,29 +138,16 @@ void XDController::report(FILE *fp, int level)
     asynMotorController::report(fp, level);
 }
 
-/** Returns a pointer to an XDMotorAxis object.
- * Returns NULL if the axis number encoded in pasynUser is invalid.
- * \param[in] pasynUser asynUser structure that encodes the axis index number. */
 XDAxis *XDController::getAxis(asynUser *pasynUser)
 {
     return static_cast<XDAxis *>(asynMotorController::getAxis(pasynUser));
 }
 
-/** Returns a pointer to an XDMotorAxis object.
- * Returns NULL if the axis number encoded in pasynUser is invalid.
- * \param[in] axisNo Axis index number. */
 XDAxis *XDController::getAxis(int axisNo)
 {
     return static_cast<XDAxis *>(asynMotorController::getAxis(axisNo));
 }
 
-/** Called when asyn clients call pasynInt32->write().
- * Extracts the function and axis number from pasynUser.
- * Sets the value in the parameter library.
- * For all other functions it calls asynMotorController::writeInt32.
- * Calls any registered callbacks for this pasynUser->reason and address.
- * \param[in] pasynUser asynUser structure that encodes the reason and address.
- * \param[in] value     Value to write. */
 asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
@@ -191,6 +203,25 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
     return status;
 }
 
+void ControllerHolder::addController(const std::string &portName, const std::string &XDPortName, const uint16_t numAxes, const double movingPollPeriod, const double idlePollPeriod)
+{
+    if (controllerMap.find(portName) == controllerMap.end())
+    {
+        std::pair<std::string, std::shared_ptr<XDController>> controller(portName, std::shared_ptr<XDController>(new XDController(portName.c_str(), XDPortName.c_str(), numAxes, movingPollPeriod / 1000., idlePollPeriod / 1000.)));
+        controllerMap.insert(controller);
+    }
+    else
+    {
+        // Display warning.
+        std::cout << "Controller with the name " << portName << " already exists. Skipping configuration." << std::endl;
+    }
+}
+
+std::shared_ptr<XDController> ControllerHolder::getController(const std::string &portName)
+{
+    return controllerMap.at(portName);
+}
+
 /** Code for iocsh registration */
 static const iocshArg XDCreateControllerArg0 = {"Port name", iocshArgString};
 static const iocshArg XDCreateControllerArg1 = {"XD port name", iocshArgString};
@@ -208,9 +239,21 @@ static void XDCreateContollerCallFunc(const iocshArgBuf *args)
     XDCreateController(args[0].sval, args[1].sval, args[2].ival, args[3].ival, args[4].ival);
 }
 
+static const iocshArg XDconfigureAxisArg0 = {"Port name", iocshArgString};
+static const iocshArg XDconfigureAxisArg1 = {"Axis Number", iocshArgInt};
+static const iocshArg XDconfigureAxisArg2 = {"type of stage", iocshArgString};
+static const iocshArg *const XDconfigureAxisArgs[] = {&XDconfigureAxisArg0,
+                                                      &XDconfigureAxisArg1,
+                                                      &XDconfigureAxisArg2};
+static const iocshFuncDef XDconfigureAxisDef = {"XDconfigureAxis", 3, XDconfigureAxisArgs};
+static void XDconfigureAxisCallFunc(const iocshArgBuf *args)
+{
+    XDconfigureAxis(args[0].sval, args[1].ival, args[2].sval);
+}
 static void XDMotorRegister(void)
 {
     iocshRegister(&XDCreateControllerDef, XDCreateContollerCallFunc);
+    iocshRegister(&XDconfigureAxisDef, XDconfigureAxisCallFunc);
 }
 
 extern "C"

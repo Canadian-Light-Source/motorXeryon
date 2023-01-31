@@ -13,14 +13,8 @@
 
 // These are the XDAxis methods
 
-/** Creates a new XDAxis object.
- * \param[in] pC Pointer to the XDController to which this axis belongs.
- * \param[in] axisNo Index number of this axis, range 0 to pC->numAxes_-1.
- *
- * Initializes register numbers, etc.
- */
 XDAxis::XDAxis(XDController *pC, int axisNo)
-    : asynMotorAxis(pC, axisNo),
+    : XeryonAxis(), asynMotorAxis(pC, axisNo),
       pC_(pC)
 {
   asynStatus status;
@@ -34,20 +28,14 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
   callParamCallbacks();
 }
 
-/** Reports on status of the driver
- * \param[in] fp The file pointer on which report information will be written
- * \param[in] level The level of report detail desired
- *
- * If details > 0 then information is printed about each axis.
- * After printing controller-specific information calls asynMotorController::report()
- */
+
 void XDAxis::report(FILE *fp, int level)
 {
   if (level > 0)
   {
     asynStatus status;
 
-    //   fprintf(fp, " foo %d ", status);
+    fprintf(fp, " foo %d ", status);
   }
 
   // Call the base class method
@@ -56,15 +44,11 @@ void XDAxis::report(FILE *fp, int level)
 
 asynStatus XDAxis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
 {
+
   asynStatus status = asynSuccess;
   static const char *functionName = "move";
 
-  // Set velocity
-  /*
-    TODO: SSPD is in weird units, 1 um/s for linear actuators and 0.01 deg/s for angular
-    need to find a way to obtain MRES in here to scale the velocity properly
-  */
-  sprintf(pC_->outString_, "SSPD=%d", (int)maxVelocity);
+  sprintf(pC_->outString_, "SSPD=%d", (int)(maxVelocity * this->getResolution() * this->getVelocityFactor()));
   status = pC_->writeController();
 
   // set absolute or relative movement target
@@ -85,8 +69,6 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
 {
   asynStatus status = asynSuccess;
   static const char *functionName = "homeAxis";
-
-  std::cout << "III: " << functionName << " home command: " << forwards << std::endl;
 
   // Begin move
   sprintf(pC_->outString_, "INDX=%d", forwards);
@@ -117,12 +99,7 @@ asynStatus XDAxis::stop(double acceleration)
 //   return status;
 // }
 
-/** Polls the axis.
- * This function reads the controller position, encoder position, the limit status, the moving status,
- * the drive power-on status and positioner type.
- * It calls setIntegerParam() and setDoubleParam() for each item that it polls,
- * and then calls callParamCallbacks() at the end.
- * \param[out] moving A flag that is set indicating that the axis is moving (1) or done (0). */
+
 asynStatus XDAxis::poll(bool *moving)
 {
 
@@ -149,7 +126,7 @@ asynStatus XDAxis::poll(bool *moving)
 
   int chanState;
 
-  int reply=0;
+  int reply = 0;
 
   double encoderPosition;
   double targetPosition;
@@ -165,6 +142,7 @@ asynStatus XDAxis::poll(bool *moving)
 
   chanState = (int)this->decodeReply(pC_->inString_);
   setIntegerParam(pC_->statrb_, chanState);
+  this->setStatus(chanState);
 
   isAmpEnabled = (chanState & (1 << 1));
   isForceZero = (chanState & (1 << 4));
@@ -183,7 +161,8 @@ asynStatus XDAxis::poll(bool *moving)
 
   *moving = !isPositionReached;
   setIntegerParam(pC_->motorStatusDone_, (isPositionReached || isForceZero));
-  setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
+  // setIntegerParam(pC_->motorClosedLoop_, isClosedLoop);
+  setIntegerParam(pC_->motorClosedLoop_, this->getIsClosedLoop());
   setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
   setIntegerParam(pC_->motorStatusGainSupport_, !isForceZero);
   setIntegerParam(pC_->motorStatusHomed_, isEncoderValid);

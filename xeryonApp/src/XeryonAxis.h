@@ -5,15 +5,105 @@
 #include <string>
 #include <iostream>
 
+#include "XeryonStages.h"
+
 class XeryonAxis
 {
 public:
     XeryonAxis(){};
-    void setStatus(int s) { status = s; std::cout << status << std::endl;};
+
+    /**
+     * @brief Print report of stage parameters to std::cout.
+     */
+    void stageReport()
+    {
+        std::cout << "Xeryon stage report:" << std::endl;
+        std::cout << "isLinear:       " << stage->isLinear << std::endl;
+        std::cout << "encoderRes:     " << stage->encoderRes << std::endl;
+        std::cout << "encoderResCmd:  " << stage->encoderResCmd << std::endl;
+        std::cout << "velocityFactor: " << stage->velocityFactor << std::endl;
+    }
+
+    /**
+     * @brief Get the stage resolution.
+     * @return resolution in nm/step or deg/step 
+     */
+    double getResolution() { return stage->encoderRes; };
+
+    /**
+     * @brief Get the velocity factor.
+     * @return velocity factor
+     */
+    double getVelocityFactor() { return stage->velocityFactor; };
+
+    /**
+     * @brief Get the encoder resolution command.
+     * @return command for encoder resolution setting
+     */
+    std::string getEncoderResCmd() { return stage->encoderResCmd; };
+
+    /**
+     * @brief Linear or angular axis.
+     * @return true for linear axis, false for angular axis
+     */
+    bool isLinear() { return stage->isLinear; };
+
+    /**
+     * @brief Set the status word.
+     * @param[in] s status word
+     */
+    void setStatus(int s) { status = s; };
+
+    /**
+     * @brief get the status word.
+     * @return status word
+     */
     int getStatus() { return status; };
+
+    /**
+     * @brief Set the stage type.
+     * @param[in] type stage type
+     */
+    void setStage(std::string type) { stage = stages.getStage(type); };
+
+    /**
+     * @brief Gget the indivual status bits.
+     */
+    int getIsAmpEnabled() { return isAmpEnabled; }
+    int getIsForceZero() { return isForceZero; }
+    int getIsMotorOn() { return isMotorOn; }
+    int getIsClosedLoop() { return isClosedLoop; }
+    int getIsEncoderAtIndex() { return isEncoderAtIndex; }
+    int getIsEncoderValid() { return isEncoderValid; }
+    int getIsSearchingIndex() { return isSearchingIndex; }
+    int getIsPositionReached() { return isPositionReached; }
+    int getIsEncoderError() { return isEncoderError; }
+    int getIsScanning() { return isScanning; }
+    int getIsAtLeftEnd() { return isAtLeftEnd; }
+    int getIsAtRightEnd() { return isAtRightEnd; }
+    int getIsErrorLimit() { return isErrorLimit; }
+    int getIsSearchingOptimalFrequency() { return isSearchingOptimalFrequency; }
+
+    std::shared_ptr<XeryonStage> stage = std::make_shared<XeryonStage>(false, "", 1, 1); // default initialization
 
 private:
     uint status;
+    bool isAmpEnabled = (status & (1 << 1));
+    bool isForceZero = (status & (1 << 4));
+    bool isMotorOn = (status & (1 << 5));
+    bool isClosedLoop = (status & (1 << 6));
+    bool isEncoderAtIndex = (status & (1 << 7));
+    bool isEncoderValid = (status & (1 << 8));
+    bool isSearchingIndex = (status & (1 << 9));
+    bool isPositionReached = (status & (1 << 10));
+    bool isEncoderError = (status & (1 << 12));
+    bool isScanning = (status & (1 << 13));
+    bool isAtLeftEnd = (status & (1 << 14));
+    bool isAtRightEnd = (status & (1 << 15));
+    bool isErrorLimit = (status & (1 << 16));
+    bool isSearchingOptimalFrequency = (status & (1 << 17));
+
+    XeryonStages stages = XeryonStages();
 };
 
 #endif /* XERYON_AXIS_H */

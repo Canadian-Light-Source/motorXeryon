@@ -6,6 +6,9 @@ Dr. Niko Kivel <niko.kivel@lightsoure.ca>
 This driver targets the `XD` controllers from Xeryon.
 So far only the `XD-M` is tested, and only in single axis configuration.
 
+== Disclaimer
+This driver is heavily influenced by a device driver developed by Tadej Humar (Paul Scherrer Institute, Switzerland).
+
 == Setup
 Each stage comes with a set of parameters that need to be loaded into the controller manually.
-The vendor supplies a 
+There is no methode to load the vendor file at the moment.

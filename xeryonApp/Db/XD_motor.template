@@ -21,7 +21,7 @@ record(motor,"$(P)$(M)")
   field(DHLM, "$(DHLM=0)")
   field(DLLM, "$(DLLM=0)")
   field(RDBD, "$(RDBD=0)")
-  field(RTRY, "$(RTRY=1)")
+  field(RTRY, "$(RTRY=0)")
   field(RMOD, "$(RMOD=3)")
   field(DLY,  "$(DLY=0)")
   field(OFF,  "$(OFF=0)")
@@ -35,6 +35,7 @@ record(motor,"$(P)$(M)")
   field(SREV, "$(SREV=1843200)")
   field(UREV, "$(UREV=360.0)")
   field(VMAX, "$(VMAX=0)")
+  field(SPDB, "$(SPDB=)")
 }
 
 # # Motor resolution for this axis
