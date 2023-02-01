@@ -17,19 +17,10 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
     : XeryonAxis(), asynMotorAxis(pC, axisNo),
       pC_(pC)
 {
-  // asynStatus status;
-
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
+
   // stop unsolicited data transfer
-  // pC_->sendCommand(this->pC_, axisNo, "INFO", "0");
-  pC_->setParameter(this->pC_, axisNo, "INFO", "0");
-  // sprintf(pC_->outString_, "INFO=0");
-  // status = pC_->writeController();
-  // if (status)
-  // {
-  //   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR,
-  //             "cannot connect to XD controller\n");
-  // }
+  pC_->setParameter(this->pC_, "INFO", 0);
 
   callParamCallbacks();
 }
@@ -50,8 +41,10 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
 
   asynStatus status = asynSuccess;
 
-  sprintf(pC_->outString_, "SSPD=%d", (int)(maxVelocity * this->getResolution() * this->getVelocityFactor()));
-  status = pC_->writeController();
+  // sprintf(pC_->outString_, "SSPD=%d", (int)(maxVelocity * this->getResolution() * this->getVelocityFactor()));
+  // status = pC_->writeController();
+  int velocity = (int)(maxVelocity * this->getResolution() * this->getVelocityFactor());
+  pC_->setParameter(this->pC_, "SSPD", velocity);
 
   // set absolute or relative movement target
   if (relative)

@@ -21,8 +21,6 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                           1,    // autoconnect
                           0, 0) // Default priority and stack size
 {
-    int axis;
-    controllerName = portName;
     asynStatus status;
     static const char *functionName = "XDController";
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating controller\n");
@@ -55,38 +53,19 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                   "%s:%s: cannot connect to XD controller\n",
                   driverName, functionName, status);
     }
-    asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Clearing error messages\n");
-
-    // sendCommand(this->controllerName, "SOFT", "?");
-    // sendCommand(this, "SOFT", "?");
-    // sprintf(this->outString_, "SOFT=?");
-    // status = this->writeReadController();
-    // if (status)
-    // {
-    //     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-    //               "%s:%s: cannot connect obtain software version from controller\n",
-    //               driverName, functionName, status);
-    // }
-    // asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: Software version: %s\n", this->inString_);
 
     // Create the axis objects
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating axes\n");
-    for (axis = 0; axis < numAxes; axis++)
+    for (size_t axis = 0; axis < numAxes; axis++)
     {
-        // new XDAxis(this, axis);
         controllerAxes[axis] = std::make_shared<XDAxis>(this, axis);
-
-        // bool lin = controllerAxes[0]->stage->isLinear;
-        // encoders[p]          = std::make_shared<Heidenhain::EIB74xEncoder>(encoderChannel, encoderHandle, encoderType);
     }
-
-    std::cout << "================================================\n";
-    // sendCommand(this, "SOFT", "?");
 
     int reply;
     getParameter(this, "SOFT", reply);
-    std::cout << "  ==> " << reply << std::endl;
-
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: software verions: %d\n", reply);
+    getParameter(this, "SRNO", reply);
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: serial number: %d\n", reply);
     startPoller(movingPollPeriod, idlePollPeriod, 2);
 }
 
@@ -209,9 +188,9 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
     return status;
 }
 
-void XDController::setParameter(XDController *device, const int &axisNo, const std::string &cmd, const std::string &payload)
+void XDController::setParameter(XDController *device, const std::string &cmd, const int &payload)
 {
-    sprintf(device->outString_, "%s=%s", cmd.c_str(), payload.c_str());
+    sprintf(device->outString_, "%s=%d", cmd.c_str(), payload);
     asynStatus status = device->writeController();
     if (status)
     {
