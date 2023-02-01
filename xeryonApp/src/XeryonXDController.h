@@ -3,6 +3,7 @@
 
 #include "asynMotorController.h"
 #include "XeryonXDAxis.h"
+#include "XeryonException.h"
 
 #include <array>
 
@@ -19,6 +20,15 @@
 #define XDfreqString "FREQ"
 
 #define XDtestString "TEST"
+
+/**
+ * @class Exception class used for exceptions related to MicroEpsilon controller.
+ */
+class XeryonControllerException : public XeryonException
+{
+public:
+    XeryonControllerException(const std::string &description) : XeryonException(description) {}
+};
 
 class epicsShareClass XDController : public asynMotorController
 {
@@ -48,7 +58,7 @@ public:
     /**
      * @brief poll method
      * @note not implemented --> Thus, the poll of the axis will be used instead.
-    */
+     */
     // asynStatus poll();
 
     /* These are the methods that we override from asynMotorDriver */
@@ -77,6 +87,15 @@ public:
     XDAxis *getAxis(int axisNo);
 
     /* ==== */
+    void setParameter(XDController *device, const std::string &cmd, const int &payload);
+
+    void setParameter(XDController *device, const std::string &cmd)
+    {
+        setParameter(device, cmd, 0);
+    };
+
+    void getParameter(XDController *device, const std::string &cmd, int &reply);
+
     std::shared_ptr<XDAxis> getAxisPointer(int axisNo) { return controllerAxes.at(axisNo); };
 
     std::array<std::shared_ptr<XDAxis>, 12> controllerAxes;
@@ -112,7 +131,7 @@ protected:
 
 /**
  * @class ControllerHolder, based on a driver developed by Tadej Humar (Paul Scherrer Institute, Switzerland)
-*/
+ */
 class ControllerHolder
 {
 public:

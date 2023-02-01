@@ -21,7 +21,6 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                           1,    // autoconnect
                           0, 0) // Default priority and stack size
 {
-    int axis;
     asynStatus status;
     static const char *functionName = "XDController";
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating controller\n");
@@ -54,29 +53,19 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                   "%s:%s: cannot connect to XD controller\n",
                   driverName, functionName, status);
     }
-    asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Clearing error messages\n");
-
-    sprintf(this->outString_, "SOFT=?");
-    status = this->writeReadController();
-    if (status)
-    {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s:%s: cannot connect obtain software version from controller\n",
-                  driverName, functionName, status);
-    }
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: Software version: %s\n", this->inString_);
 
     // Create the axis objects
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating axes\n");
-    for (axis = 0; axis < numAxes; axis++)
+    for (size_t axis = 0; axis < numAxes; axis++)
     {
-        // new XDAxis(this, axis);
         controllerAxes[axis] = std::make_shared<XDAxis>(this, axis);
-
-        bool lin = controllerAxes[0]->stage->isLinear;
-        // encoders[p]          = std::make_shared<Heidenhain::EIB74xEncoder>(encoderChannel, encoderHandle, encoderType);
     }
 
+    int reply;
+    getParameter(this, "SOFT", reply);
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: software verions: %d\n", reply);
+    getParameter(this, "SRNO", reply);
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: serial number: %d\n", reply);
     startPoller(movingPollPeriod, idlePollPeriod, 2);
 }
 
@@ -162,25 +151,21 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
     if (function == indx_)
     {
         /* move to index (homing) */
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "INDX=%d", value);
         status = pAxis->pC_->writeController();
     }
     else if (function == ptol_)
     {
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "PTOL=%d", value);
         status = pAxis->pC_->writeController();
     }
     else if (function == pto2_)
     {
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "PTO2=%d", value);
         status = pAxis->pC_->writeController();
     }
     else if (function == test_)
     {
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "TEST=%d", value);
         status = pAxis->pC_->writeController();
     }
@@ -202,6 +187,36 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
                   driverName, functionName, function, value);
     return status;
 }
+
+void XDController::setParameter(XDController *device, const std::string &cmd, const int &payload)
+{
+    sprintf(device->outString_, "%s=%d", cmd.c_str(), payload);
+    asynStatus status = device->writeController();
+    if (status)
+    {
+        throw XeryonControllerException("Failed to set parameter" + std::string(device->outString_));
+    }
+};
+
+void XDController::getParameter(XDController *device, const std::string &cmd, int &reply)
+{
+    sprintf(device->outString_, "%s=?", cmd.c_str());
+    asynStatus status = device->writeReadController();
+    if (status)
+    {
+        throw XeryonControllerException("Failed to get parameter" + std::string(device->outString_));
+    }
+    std::string buf = device->inString_;
+    try
+    {
+        reply = atoi(buf.substr(buf.find("=") + 1).c_str());
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "failed to decode controller reply (" << buf << "). Exception: " << e.what() << '\n';
+    }
+
+};
 
 void ControllerHolder::addController(const std::string &portName, const std::string &XDPortName, const uint16_t numAxes, const double movingPollPeriod, const double idlePollPeriod)
 {

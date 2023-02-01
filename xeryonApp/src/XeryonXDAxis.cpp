@@ -17,19 +17,19 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
     : XeryonAxis(), asynMotorAxis(pC, axisNo),
       pC_(pC)
 {
-  asynStatus status;
-
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
-  // stop unsolicited data transfer
-  sprintf(pC_->outString_, "INFO=0");
-  status = pC_->writeController();
-  if (status)
-  {
-    asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR,
-              "cannot connect to XD controller\n");
-  }
 
-  callParamCallbacks();
+  try
+  {
+    // stop unsolicited data transfer
+    pC_->setParameter(this->pC_, "INFO", 0);
+    callParamCallbacks();
+  }
+  catch (const std::exception &e)
+  {
+    std::cerr << e.what() << '\n';
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: %s\n", e.what());
+  }
 }
 
 void XDAxis::report(FILE *fp, int level)
@@ -48,19 +48,26 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
 
   asynStatus status = asynSuccess;
 
-  sprintf(pC_->outString_, "SSPD=%d", (int)(maxVelocity * this->getResolution() * this->getVelocityFactor()));
-  status = pC_->writeController();
+  try
+  {
+    int velocity = (int)(maxVelocity * this->getResolution() * this->getVelocityFactor());
+    pC_->setParameter(this->pC_, "SSPD", velocity);
 
-  // set absolute or relative movement target
-  if (relative)
-  {
-    sprintf(pC_->outString_, "STEP=%d", (int)position);
+    // set absolute or relative movement target
+    if (relative)
+    {
+      pC_->setParameter(this->pC_, "STEP", (int)position);
+    }
+    else
+    {
+      pC_->setParameter(this->pC_, "DPOS", (int)position);
+    }
   }
-  else
+  catch (const std::exception &e)
   {
-    sprintf(pC_->outString_, "DPOS=%d", (int)position);
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::move: %s\n", e.what());
+    status = asynError;
   }
-  status = pC_->writeController();
 
   return status;
 }
@@ -69,111 +76,85 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
 {
   asynStatus status = asynSuccess;
 
-  // Begin move
-  sprintf(pC_->outString_, "INDX=%d", forwards);
-  status = pC_->writeController();
+  try
+  {
+    // Begin move
+    pC_->setParameter(this->pC_, "INDX", forwards);
+  }
+  catch (const std::exception &e)
+  {
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::home: %s\n", e.what());
+    status = asynError;
+  }
 
   return status;
 }
 
 asynStatus XDAxis::stop(double acceleration)
 {
-  asynStatus status;
+  asynStatus status = asynSuccess;
 
-  // Force the piezo signals to zero volt
-  sprintf(pC_->outString_, "ZERO");
-  status = pC_->writeController();
+  try
+  {
+    // Force the piezo signals to zero volt
+    pC_->setParameter(this->pC_, "ZERO");
+  }
+  catch (const std::exception &e)
+  {
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::stop: %s\n", e.what());
+    status = asynError;
+  }
 
   return status;
 }
 
 asynStatus XDAxis::poll(bool *moving)
 {
-
-  /*
-    TODO:
-      - get rid of the ugly `goto`
-  */
-
-  int chanState;
-
   int reply = 0;
-
-  double encoderPosition;
-  double targetPosition;
-  double targetVelocity;
   asynStatus comStatus = asynSuccess;
 
-  // Read the channel state
-  sprintf(pC_->outString_, "STAT=?");
-  comStatus = pC_->writeReadController();
-  asynPrint(pC_->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
-  if (comStatus)
-    goto skip;
+  try
+  {
+    // Read the channel state
+    pC_->getParameter(this->pC_, "STAT", reply);
+    setIntegerParam(pC_->statrb_, reply);
+    this->setStatus(reply);
 
-  chanState = (int)this->decodeReply(pC_->inString_);
-  setIntegerParam(pC_->statrb_, chanState);
-  this->setStatus(chanState);
+    *moving = !this->getIsPositionReached();
+    setIntegerParam(pC_->motorStatusDone_, ((this->getIsPositionReached()) || (this->getIsForceZero())));
+    setIntegerParam(pC_->motorClosedLoop_, this->getIsClosedLoop());
+    setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
+    setIntegerParam(pC_->motorStatusGainSupport_, !this->getIsForceZero());
+    setIntegerParam(pC_->motorStatusHomed_, this->getIsEncoderValid());
+    setIntegerParam(pC_->motorStatusHighLimit_, this->getIsAtLeftEnd());
+    setIntegerParam(pC_->motorStatusLowLimit_, this->getIsAtRightEnd());
+    setIntegerParam(pC_->motorStatusFollowingError_, this->getIsErrorLimit());
+    setIntegerParam(pC_->motorStatusProblem_, this->getIsErrorLimit());
+    setIntegerParam(pC_->motorStatusAtHome_, this->getIsEncoderAtIndex());
 
-  *moving = !this->getIsPositionReached();
-  setIntegerParam(pC_->motorStatusDone_, ((this->getIsPositionReached()) || (this->getIsForceZero())));
-  setIntegerParam(pC_->motorClosedLoop_, this->getIsClosedLoop());
-  setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
-  setIntegerParam(pC_->motorStatusGainSupport_, !this->getIsForceZero());
-  setIntegerParam(pC_->motorStatusHomed_, this->getIsEncoderValid());
-  setIntegerParam(pC_->motorStatusHighLimit_, this->getIsAtLeftEnd());
-  setIntegerParam(pC_->motorStatusLowLimit_, this->getIsAtRightEnd());
-  setIntegerParam(pC_->motorStatusFollowingError_, this->getIsErrorLimit());
-  setIntegerParam(pC_->motorStatusProblem_, this->getIsErrorLimit());
-  setIntegerParam(pC_->motorStatusAtHome_, this->getIsEncoderAtIndex());
+    // Read the encoder position
+    pC_->getParameter(this->pC_, "EPOS", reply);
+    setDoubleParam(pC_->motorEncoderPosition_, (double)reply);
+    setIntegerParam(pC_->eposrb_, reply);
 
-  // Read the current encoder position
-  sprintf(pC_->outString_, "EPOS=?");
-  comStatus = pC_->writeReadController();
-  // std::cout << "EPOS was decoded as --> " << this->decodeReply(pC_->inString_) << std::endl;
-  asynPrint(pC_->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
-  if (comStatus)
-    goto skip;
-  // encoderPosition = (double)strtod(pC_->inString_, NULL);
-  // encoderPosition /= PULSES_PER_STEP;
-  encoderPosition = this->decodeReply(pC_->inString_);
-  setDoubleParam(pC_->motorEncoderPosition_, (double)encoderPosition);
-  setIntegerParam(pC_->eposrb_, encoderPosition);
+    // Read the current theoretical position
+    pC_->getParameter(this->pC_, "DPOS", reply);
+    setDoubleParam(pC_->motorPosition_, reply);
+    setIntegerParam(pC_->dposrb_, reply);
 
-  // Read the current theoretical position
-  sprintf(pC_->outString_, "DPOS=?");
-  comStatus = pC_->writeReadController();
-  // std::cout << "DPOS was decoded as --> " << this->decodeReply(pC_->inString_) << std::endl;
-  asynPrint(pC_->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
-  if (comStatus)
-    goto skip;
-  // targetPosition = (double)strtod(pC_->inString_, NULL);
-  // targetPosition /= PULSES_PER_STEP;
-  targetPosition = this->decodeReply(pC_->inString_);
-  setDoubleParam(pC_->motorPosition_, targetPosition);
-  setIntegerParam(pC_->dposrb_, targetPosition);
+    // Read the current velocity setpoint
+    pC_->getParameter(this->pC_, "SSPD", reply);
+    setIntegerParam(pC_->sspdrb_, reply);
 
-  // Read the current velocity setpoint
-  sprintf(pC_->outString_, "SSPD=?");
-  comStatus = pC_->writeReadController();
-  asynPrint(pC_->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
-  if (comStatus)
-    goto skip;
-  // targetPosition = (double)strtod(pC_->inString_, NULL);
-  // targetPosition /= PULSES_PER_STEP;
-  targetVelocity = this->decodeReply(pC_->inString_);
-  setIntegerParam(pC_->sspdrb_, targetVelocity);
-
-  // Read the current exitation frequency
-  sprintf(pC_->outString_, "FREQ=?");
-  comStatus = pC_->writeReadController();
-  // asynPrint(pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
-  if (comStatus)
-    goto skip;
-  reply = this->decodeReply(pC_->inString_);
-  setIntegerParam(pC_->freqrb_, reply);
-
-skip:
+    // Read the current exitation frequency
+    pC_->getParameter(this->pC_, "FREQ", reply);
+    setIntegerParam(pC_->freqrb_, reply);
+  }
+  catch (const std::exception &e)
+  {
+    std::cerr << "error in poll" << e.what() << '\n';
+    comStatus = asynError;
+  }
   setIntegerParam(pC_->motorStatusProblem_, comStatus ? 1 : 0);
   callParamCallbacks();
   return comStatus ? asynError : asynSuccess;
