@@ -19,10 +19,17 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
 {
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
 
-  // stop unsolicited data transfer
-  pC_->setParameter(this->pC_, "INFO", 0);
-
-  callParamCallbacks();
+  try
+  {
+    // stop unsolicited data transfer
+    pC_->setParameter(this->pC_, "INFO", 0);
+    callParamCallbacks();
+  }
+  catch (const std::exception &e)
+  {
+    std::cerr << e.what() << '\n';
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: %s\n", e.what());
+  }
 }
 
 void XDAxis::report(FILE *fp, int level)
@@ -41,17 +48,25 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
 
   asynStatus status = asynSuccess;
 
-  int velocity = (int)(maxVelocity * this->getResolution() * this->getVelocityFactor());
-  pC_->setParameter(this->pC_, "SSPD", velocity);
+  try
+  {
+    int velocity = (int)(maxVelocity * this->getResolution() * this->getVelocityFactor());
+    pC_->setParameter(this->pC_, "SSPD", velocity);
 
-  // set absolute or relative movement target
-  if (relative)
-  {
-    pC_->setParameter(this->pC_, "STEP", (int)position);
+    // set absolute or relative movement target
+    if (relative)
+    {
+      pC_->setParameter(this->pC_, "STEP", (int)position);
+    }
+    else
+    {
+      pC_->setParameter(this->pC_, "DPOS", (int)position);
+    }
   }
-  else
+  catch (const std::exception &e)
   {
-    pC_->setParameter(this->pC_, "DPOS", (int)position);
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::move: %s\n", e.what());
+    status = asynError;
   }
 
   return status;
@@ -61,8 +76,16 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
 {
   asynStatus status = asynSuccess;
 
-  // Begin move
-  pC_->setParameter(this->pC_, "INDX", forwards);
+  try
+  {
+    // Begin move
+    pC_->setParameter(this->pC_, "INDX", forwards);
+  }
+  catch (const std::exception &e)
+  {
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::home: %s\n", e.what());
+    status = asynError;
+  }
 
   return status;
 }
@@ -71,8 +94,16 @@ asynStatus XDAxis::stop(double acceleration)
 {
   asynStatus status = asynSuccess;
 
-  // Force the piezo signals to zero volt
-  pC_->setParameter(this->pC_, "ZERO");
+  try
+  {
+    // Force the piezo signals to zero volt
+    pC_->setParameter(this->pC_, "ZERO");
+  }
+  catch (const std::exception &e)
+  {
+    asynPrint(this->pC_->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::stop: %s\n", e.what());
+    status = asynError;
+  }
 
   return status;
 }
