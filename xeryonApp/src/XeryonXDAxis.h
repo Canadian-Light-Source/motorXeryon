@@ -74,7 +74,7 @@ public:
    * @brief Set the current position.
    * @note This method is not implemented yet
    */
-  asynStatus setPosition(double position){};
+  asynStatus setPosition(double position){ return asynSuccess; };
 
   // XD specific methods
   /**

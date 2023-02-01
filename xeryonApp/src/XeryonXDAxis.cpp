@@ -36,8 +36,7 @@ void XDAxis::report(FILE *fp, int level)
 {
   if (level > 0)
   {
-    asynStatus status;
-    fprintf(fp, " status = %d ", status);
+    fprintf(fp, "Xeryon axis\n");
   }
 
   // Call the base class method
@@ -48,7 +47,6 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
 {
 
   asynStatus status = asynSuccess;
-  static const char *functionName = "move";
 
   sprintf(pC_->outString_, "SSPD=%d", (int)(maxVelocity * this->getResolution() * this->getVelocityFactor()));
   status = pC_->writeController();
@@ -70,7 +68,6 @@ asynStatus XDAxis::move(double position, int relative, double minVelocity, doubl
 asynStatus XDAxis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status = asynSuccess;
-  static const char *functionName = "homeAxis";
 
   // Begin move
   sprintf(pC_->outString_, "INDX=%d", forwards);
@@ -82,7 +79,6 @@ asynStatus XDAxis::home(double minVelocity, double maxVelocity, double accelerat
 asynStatus XDAxis::stop(double acceleration)
 {
   asynStatus status;
-  static const char *functionName = "stopAxis";
 
   // Force the piezo signals to zero volt
   sprintf(pC_->outString_, "ZERO");
