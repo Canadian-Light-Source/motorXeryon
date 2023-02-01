@@ -99,6 +99,8 @@ public:
     return decodeReply(buf, "=");
   };
 
+  // asynStatus status;
+
 private:
   /**
    * @brief Pointer to the asynMotorController to which this axis belongs.

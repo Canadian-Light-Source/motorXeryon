@@ -23,6 +23,11 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
   // stop unsolicited data transfer
   sprintf(pC_->outString_, "INFO=0");
   status = pC_->writeController();
+  if (status)
+  {
+    asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR,
+              "cannot connect to XD controller\n");
+  }
 
   callParamCallbacks();
 }
@@ -32,8 +37,7 @@ void XDAxis::report(FILE *fp, int level)
   if (level > 0)
   {
     asynStatus status;
-
-    fprintf(fp, " foo %d ", status);
+    fprintf(fp, " status = %d ", status);
   }
 
   // Call the base class method
@@ -116,7 +120,7 @@ asynStatus XDAxis::poll(bool *moving)
   this->setStatus(chanState);
 
   *moving = !this->getIsPositionReached();
-  setIntegerParam(pC_->motorStatusDone_, ( (this->getIsPositionReached()) || (this->getIsForceZero()) ));
+  setIntegerParam(pC_->motorStatusDone_, ((this->getIsPositionReached()) || (this->getIsForceZero())));
   setIntegerParam(pC_->motorClosedLoop_, this->getIsClosedLoop());
   setIntegerParam(pC_->motorStatusHasEncoder_, 1); // Xeryon axis have encoders
   setIntegerParam(pC_->motorStatusGainSupport_, !this->getIsForceZero());

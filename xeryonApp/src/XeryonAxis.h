@@ -49,33 +49,33 @@ public:
     bool isLinear() { return stage->isLinear; };
 
     /**
-     * @brief Set the status word.
-     * @param[in] s status word
+     * @brief Set the status_ word.
+     * @param[in] s status_ word
      */
     void setStatus(int s)
     {
-        status = s;
-        isAmpEnabled = (status & (1 << 1));
-        isForceZero = (status & (1 << 4));
-        isMotorOn = (status & (1 << 5));
-        isClosedLoop = (status & (1 << 6));
-        isEncoderAtIndex = (status & (1 << 7));
-        isEncoderValid = (status & (1 << 8));
-        isSearchingIndex = (status & (1 << 9));
-        isPositionReached = (status & (1 << 10));
-        isEncoderError = (status & (1 << 12));
-        isScanning = (status & (1 << 13));
-        isAtLeftEnd = (status & (1 << 14));
-        isAtRightEnd = (status & (1 << 15));
-        isErrorLimit = (status & (1 << 16));
-        isSearchingOptimalFrequency = (status & (1 << 17));
+        status_ = s;
+        isAmpEnabled = (status_ & (1 << 1));
+        isForceZero = (status_ & (1 << 4));
+        isMotorOn = (status_ & (1 << 5));
+        isClosedLoop = (status_ & (1 << 6));
+        isEncoderAtIndex = (status_ & (1 << 7));
+        isEncoderValid = (status_ & (1 << 8));
+        isSearchingIndex = (status_ & (1 << 9));
+        isPositionReached = (status_ & (1 << 10));
+        isEncoderError = (status_ & (1 << 12));
+        isScanning = (status_ & (1 << 13));
+        isAtLeftEnd = (status_ & (1 << 14));
+        isAtRightEnd = (status_ & (1 << 15));
+        isErrorLimit = (status_ & (1 << 16));
+        isSearchingOptimalFrequency = (status_ & (1 << 17));
     };
 
     /**
-     * @brief get the status word.
-     * @return status word
+     * @brief get the status_ word.
+     * @return status_ word
      */
-    int getStatus() { return status; };
+    int getStatus() { return status_; };
 
     /**
      * @brief Set the stage type.
@@ -84,7 +84,7 @@ public:
     void setStage(std::string type) { stage = stages.getStage(type); };
 
     /**
-     * @brief Gget the indivual status bits.
+     * @brief Gget the indivual status_ bits.
      */
     int getIsAmpEnabled() { return isAmpEnabled; }
     int getIsForceZero() { return isForceZero; }
@@ -104,7 +104,7 @@ public:
     std::shared_ptr<XeryonStage> stage = std::make_shared<XeryonStage>(false, "", 1, 1); // default initialization
 
 private:
-    uint status;
+    uint status_;
     bool isAmpEnabled;
     bool isForceZero;
     bool isMotorOn;
