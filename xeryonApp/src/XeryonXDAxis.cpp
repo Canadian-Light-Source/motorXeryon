@@ -21,13 +21,15 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
 
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
   // stop unsolicited data transfer
-  sprintf(pC_->outString_, "INFO=0");
-  status = pC_->writeController();
-  if (status)
-  {
-    asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR,
-              "cannot connect to XD controller\n");
-  }
+  // pC_->sendCommand(this->pC_, axisNo, "INFO", "0");
+  pC_->setParameter(this->pC_, axisNo, "INFO", "0");
+  // sprintf(pC_->outString_, "INFO=0");
+  // status = pC_->writeController();
+  // if (status)
+  // {
+  //   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR,
+  //             "cannot connect to XD controller\n");
+  // }
 
   callParamCallbacks();
 }

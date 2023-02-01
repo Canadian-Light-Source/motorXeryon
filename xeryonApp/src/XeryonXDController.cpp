@@ -22,6 +22,7 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
                           0, 0) // Default priority and stack size
 {
     int axis;
+    controllerName = portName;
     asynStatus status;
     static const char *functionName = "XDController";
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating controller\n");
@@ -56,15 +57,17 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     }
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Clearing error messages\n");
 
-    sprintf(this->outString_, "SOFT=?");
-    status = this->writeReadController();
-    if (status)
-    {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s:%s: cannot connect obtain software version from controller\n",
-                  driverName, functionName, status);
-    }
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: Software version: %s\n", this->inString_);
+    // sendCommand(this->controllerName, "SOFT", "?");
+    // sendCommand(this, "SOFT", "?");
+    // sprintf(this->outString_, "SOFT=?");
+    // status = this->writeReadController();
+    // if (status)
+    // {
+    //     asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+    //               "%s:%s: cannot connect obtain software version from controller\n",
+    //               driverName, functionName, status);
+    // }
+    // asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::XDController: Software version: %s\n", this->inString_);
 
     // Create the axis objects
     asynPrint(this->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDController: Creating axes\n");
@@ -73,9 +76,16 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
         // new XDAxis(this, axis);
         controllerAxes[axis] = std::make_shared<XDAxis>(this, axis);
 
-        bool lin = controllerAxes[0]->stage->isLinear;
+        // bool lin = controllerAxes[0]->stage->isLinear;
         // encoders[p]          = std::make_shared<Heidenhain::EIB74xEncoder>(encoderChannel, encoderHandle, encoderType);
     }
+
+    std::cout << "================================================\n";
+    // sendCommand(this, "SOFT", "?");
+
+    std::string reply;
+    getParameter(this, "SOFT", reply);
+    std::cout << "  ==> " << reply << std::endl;
 
     startPoller(movingPollPeriod, idlePollPeriod, 2);
 }
@@ -202,6 +212,31 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
                   driverName, functionName, function, value);
     return status;
 }
+
+void XDController::setParameter(XDController *device, const int &axisNo, const std::string &cmd, const std::string &payload)
+{
+    sprintf(device->outString_, "%s=%s", cmd.c_str(), payload.c_str());
+    asynPrint(device->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::setParameter: (%s) ==> %s\n", device->outString_, payload.c_str());
+    asynStatus status = device->writeController();
+    if (status)
+    {
+        throw XeryonControllerException("Failed to set parameter" + std::string(device->outString_));
+    }
+};
+
+void XDController::getParameter(XDController *device, const int &axisNo, const std::string &cmd, std::string &reply)
+{
+    sprintf(device->outString_, "%s=?", cmd.c_str());
+    asynStatus status = device->writeReadController();
+    if (status)
+    {
+        throw XeryonControllerException("Failed to get parameter" + std::string(device->outString_));
+    }
+    asynPrint(device->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::getParameter: (%s) ==> %s\n", device->outString_, device->inString_);
+    std::cerr << "\t==> XDController::getParameter: ACCESS inString !!!" << std::endl;
+    reply = device->inString_;
+    std::cerr << "\t==> XDController::getParameter: DONE !!!" << std::endl;
+};
 
 void ControllerHolder::addController(const std::string &portName, const std::string &XDPortName, const uint16_t numAxes, const double movingPollPeriod, const double idlePollPeriod)
 {
