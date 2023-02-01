@@ -17,7 +17,7 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
     : XeryonAxis(), asynMotorAxis(pC, axisNo),
       pC_(pC)
 {
-  asynStatus status;
+  // asynStatus status;
 
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
   // stop unsolicited data transfer
@@ -100,6 +100,7 @@ asynStatus XDAxis::poll(bool *moving)
   int chanState;
 
   int reply = 0;
+  std::string replyString;
 
   double encoderPosition;
   double targetPosition;
@@ -107,13 +108,17 @@ asynStatus XDAxis::poll(bool *moving)
   asynStatus comStatus = asynSuccess;
 
   // Read the channel state
-  sprintf(pC_->outString_, "STAT=?");
-  comStatus = pC_->writeReadController();
-  asynPrint(pC_->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
-  if (comStatus)
-    goto skip;
+  // sprintf(pC_->outString_, "STAT=?");
+  // comStatus = pC_->writeReadController();
+  // asynPrint(pC_->pasynUserSelf, ASYN_TRACEIO_DRIVER, "XDController::XDAxis: send(%s)->(%s) [%d]\n", pC_->outString_, pC_->inString_, comStatus);
+  // if (comStatus)
+  //   goto skip;
 
-  chanState = (int)this->decodeReply(pC_->inString_);
+  // chanState = (int)this->decodeReply(pC_->inString_);
+  // pC_->getParameter(this->pC_, "STAT", replyString);
+  // chanState = atoi(replyString.c_str());
+  pC_->getParameter(this->pC_, "STAT", chanState);
+  // (int)this->decodeReply(pC_->inString_);
   setIntegerParam(pC_->statrb_, chanState);
   this->setStatus(chanState);
 

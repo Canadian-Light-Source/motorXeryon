@@ -83,7 +83,7 @@ XDController::XDController(const char *portName, const char *XDPortName, int num
     std::cout << "================================================\n";
     // sendCommand(this, "SOFT", "?");
 
-    std::string reply;
+    int reply;
     getParameter(this, "SOFT", reply);
     std::cout << "  ==> " << reply << std::endl;
 
@@ -172,25 +172,21 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
     if (function == indx_)
     {
         /* move to index (homing) */
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "INDX=%d", value);
         status = pAxis->pC_->writeController();
     }
     else if (function == ptol_)
     {
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "PTOL=%d", value);
         status = pAxis->pC_->writeController();
     }
     else if (function == pto2_)
     {
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "PTO2=%d", value);
         status = pAxis->pC_->writeController();
     }
     else if (function == test_)
     {
-        // pAxis->axisNo_
         sprintf(pAxis->pC_->outString_, "TEST=%d", value);
         status = pAxis->pC_->writeController();
     }
@@ -216,7 +212,6 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
 void XDController::setParameter(XDController *device, const int &axisNo, const std::string &cmd, const std::string &payload)
 {
     sprintf(device->outString_, "%s=%s", cmd.c_str(), payload.c_str());
-    asynPrint(device->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::setParameter: (%s) ==> %s\n", device->outString_, payload.c_str());
     asynStatus status = device->writeController();
     if (status)
     {
@@ -224,7 +219,7 @@ void XDController::setParameter(XDController *device, const int &axisNo, const s
     }
 };
 
-void XDController::getParameter(XDController *device, const int &axisNo, const std::string &cmd, std::string &reply)
+void XDController::getParameter(XDController *device, const std::string &cmd, int &reply)
 {
     sprintf(device->outString_, "%s=?", cmd.c_str());
     asynStatus status = device->writeReadController();
@@ -232,10 +227,16 @@ void XDController::getParameter(XDController *device, const int &axisNo, const s
     {
         throw XeryonControllerException("Failed to get parameter" + std::string(device->outString_));
     }
-    asynPrint(device->pasynUserSelf, ASYN_TRACE_ERROR, "XDController::getParameter: (%s) ==> %s\n", device->outString_, device->inString_);
-    std::cerr << "\t==> XDController::getParameter: ACCESS inString !!!" << std::endl;
-    reply = device->inString_;
-    std::cerr << "\t==> XDController::getParameter: DONE !!!" << std::endl;
+    std::string buf = device->inString_;
+    try
+    {
+        reply = atoi(buf.substr(buf.find("=") + 1).c_str());
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "failed to decode controller reply (" << buf << "). Exception: " << e.what() << '\n';
+    }
+
 };
 
 void ControllerHolder::addController(const std::string &portName, const std::string &XDPortName, const uint16_t numAxes, const double movingPollPeriod, const double idlePollPeriod)

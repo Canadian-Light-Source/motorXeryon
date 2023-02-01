@@ -91,20 +91,23 @@ public:
 
     void setParameter(XDController *device, const int &axisNo, const std::string &cmd, const std::string &payload);
 
-    void setParameter(XDController *device, const std::string &cmd, const std::string &payload){
+    void setParameter(XDController *device, const std::string &cmd, const std::string &payload)
+    {
         std::cout << "==> setParameter w/o axis | w/ payload" << std::endl;
         setParameter(device, -1, cmd, payload);
     };
-    void setParameter(XDController *device, const std::string &cmd){
+    void setParameter(XDController *device, const std::string &cmd)
+    {
         setParameter(device, -1, cmd, 0);
     };
 
-    void getParameter(XDController *device, const int &axisNo, const std::string &cmd, std::string &reply);
+    // void getParameter(XDController *device, const int &axisNo, const std::string &cmd, int &reply);
 
-    void getParameter(XDController *device, const std::string &cmd, std::string &reply) {
-        std::cout << "==> getParameter w/o axis" << std::endl;
-        getParameter(device, -1, cmd, reply);
-    };
+    void getParameter(XDController *device, const std::string &cmd, int &reply);
+    // {
+    //     std::cout << "==> getParameter w/o axis" << std::endl;
+    //     getParameter(device, -1, cmd, reply);
+    // };
 
     std::shared_ptr<XDAxis> getAxisPointer(int axisNo) { return controllerAxes.at(axisNo); };
 
