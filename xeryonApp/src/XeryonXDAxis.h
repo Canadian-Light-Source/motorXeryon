@@ -100,10 +100,10 @@ public:
   };
 
 private:
-  XDController *pC_; /**< Pointer to the asynMotorController to which this axis belongs.
-                      *   Abbreviated because it is used very frequently */
-  int channel_;
-  asynStatus comStatus_;
+  /**
+   * @brief Pointer to the asynMotorController to which this axis belongs.
+   */
+  XDController *pC_;
 
   friend class XDController;
 };

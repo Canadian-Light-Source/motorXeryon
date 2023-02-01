@@ -20,7 +20,6 @@ XDAxis::XDAxis(XDController *pC, int axisNo)
   asynStatus status;
 
   asynPrint(pC->pasynUserSelf, ASYN_TRACE_ERROR, "XDAxis::XDAxis: Creating axis %u\n", axisNo);
-  channel_ = axisNo;
   // stop unsolicited data transfer
   sprintf(pC_->outString_, "INFO=0");
   status = pC_->writeController();
