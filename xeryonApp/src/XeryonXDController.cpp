@@ -165,9 +165,10 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
         status = pAxis->pC_->writeController();
     }
     else if (function == test_)
-    {
-        sprintf(pAxis->pC_->outString_, "TEST=%d", value);
-        status = pAxis->pC_->writeController();
+    {   
+        pAxis->pC_->setParameter(pAxis->pC_, "TEST", value);
+        // sprintf(pAxis->pC_->outString_, "TEST=%d", value);
+        // status = pAxis->pC_->writeController();
     }
     else
     {
@@ -190,6 +191,8 @@ asynStatus XDController::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 void XDController::setParameter(XDController *device, const std::string &cmd, const int &payload)
 {
+    XDAxis *pAxis = getAxis(this->pasynUserSelf);
+    std::cout << "--> AXIS: " << pAxis->axisNo_ << std::endl;
     sprintf(device->outString_, "%s=%d", cmd.c_str(), payload);
     asynStatus status = device->writeController();
     if (status)
